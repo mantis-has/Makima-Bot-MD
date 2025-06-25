@@ -2,26 +2,27 @@ var handler = async (m, { conn, participants, args }) => {
     if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
     const groupMetadata = await conn.groupMetadata(m.chat);
+    const botNumber = conn.user.jid.split('@')[0]; // número limpio del bot
 
-    const botNumber = conn.user.jid.split('@')[0]; // número del bot sin @
-    const botParticipant = participants.find(p => p.id.startsWith(botNumber));
+    // Buscar al bot en participantes con coincidencia parcial
+    const botParticipant = participants.find(p => p.id.includes(botNumber));
     const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
 
     if (!isBotAdmin) {
-        console.log('[❗] BOT ID NO DETECTADO COMO ADMIN');
-        console.log('botNumber:', botNumber);
-        console.log('conn.user.jid:', conn.user.jid);
-        console.log('botParticipant:', botParticipant);
+        console.log('❗ No detectado como admin');
+        console.log('BotNumber:', botNumber);
+        console.log('Bot en participants:', botParticipant);
+        console.log('Participants:', participants.map(p => p.id));
         return m.reply('🧃 No soy admin, no puedo expulsar a nadie.');
     }
 
-    // Validar si el que mandó el comando es admin
+    // Validar si el que ejecuta el comando es admin
     const senderParticipant = participants.find(p => p.id === m.sender);
     const isSenderAdmin = senderParticipant?.admin === 'admin' || senderParticipant?.admin === 'superadmin';
 
     if (!isSenderAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
-    // Obtener el usuario a expulsar
+    // Obtener usuario a expulsar
     let user;
     if (m.mentionedJid[0]) {
         user = m.mentionedJid[0];
