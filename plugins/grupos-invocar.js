@@ -24,7 +24,7 @@ const handler = async (m, { conn, args, command, usedPrefix }) => {
   const total = groupMetadata.participants.length;
 
   const header = `╭─────────────╮\n│   🗣️ *MENCIÓN GENERAL*  │\n╰─────────────╯\n`;
-  const info = `💌 *Mensaje:* ${mensaje}\n👥 *Miembros:* ${total}\n${customEmoji.repeat(15)}\n`;
+  const info = `💌 *Mensaje:* ${mensaje}\n👥 *Miembros:* ${total}\n${customEmoji.repeat(1)}\n`;
 
   let cuerpo = '';
   for (const mem of groupMetadata.participants) {
