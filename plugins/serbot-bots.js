@@ -18,7 +18,7 @@ let handler = async (m, { conn }) => {
   let formatUptime = clockString(uptime)
 
   let totalUsers = uniqueUsers.size
-  let txt = `「 *• Subs - Bots* 」`
+  let txt = `「 *Subs - Bots* 」`
   txt += `\n\n`
   txt += `*◦Bot Principal →* 1\n`
   txt += `*◦Nombre →* ${namebot}\n`
