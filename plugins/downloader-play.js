@@ -89,8 +89,7 @@ const downloadAudio = async (conn, m, video, title) => {
     await conn.sendFile(
       m.chat,
       audio,
-      `${(filename || title).replace(/[^\w\s]/gi, '')}.mp3`, ptt: true,
-      `✦ *${title}*`,
+      `${(filename || title).replace(/[^\w\s]/gi, '')}.mp3`,
       m,
       null,
       { mimetype: 'audio/mpeg', ptt: true }
@@ -141,7 +140,6 @@ const downloadVideo = async (conn, m, video, title) => {
       m.chat,
       videoUrl,
       `${(filename || title).replace(/[^\w\s]/gi, '')}.mp4`,
-      `✦ *${title}*`,
       m,
       null,
       { asDocument: doc, mimetype: 'video/mp4' }
