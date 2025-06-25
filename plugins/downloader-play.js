@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import yts from 'yt-search'
-import { yta, ytv } from '@Im-Ado/AdonixScraper'
+import { yta, ytv } from './_dl.js'
 
 const dev = 'Ado'
 const limitMB = 100
