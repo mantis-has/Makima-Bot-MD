@@ -21,7 +21,7 @@ global.jadi = 'JadiBots'
 global.yukiJadibts = true
 
 global.packname = '✦ 𝖸𝗎𝗋𝗎 𝖸𝗎𝗋𝗂 ✦'
-global.namebot = 'Anya Forger'
+global.namebot = '✧ ʏᴜʀᴜ ʏᴜʀɪ ✧'
 global.author = '「☄︎」 ᴍᴀᴅᴇ ᴡɪᴛʜ 𝘄𝗶𝗿𝗸'
 
 
