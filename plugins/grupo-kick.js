@@ -3,16 +3,7 @@ var handler = async (m, { conn, participants, args }) => {
 
     const groupMetadata = await conn.groupMetadata(m.chat);
     
-    const botNumber = conn.user.jid.split('@')[0]; // solo número
-    let botParticipant = participants.find(p => {
-        return p.id.includes(botNumber) || botNumber.includes(p.id.split('@')[0])
-    });
-
-    console.log('🔎 BotNumber:', botNumber)
-    console.log('🔎 Detectado como:', botParticipant?.id || 'NO DETECTADO')
-
-    const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
-    if (!isBotAdmin) return m.reply('🧃 No soy admin, no puedo expulsar a nadie.');
+    // No se chequea si el bot es admin, solo intenta expulsar
 
     // Verificar si el que ejecuta es admin
     const userParticipant = participants.find(p => p.id === m.sender);
@@ -21,7 +12,7 @@ var handler = async (m, { conn, participants, args }) => {
 
     // Obtener usuario a expulsar
     let user;
-    if (m.mentionedJid[0]) {
+    if (m.mentionedJid && m.mentionedJid[0]) {
         user = m.mentionedJid[0];
     } else if (m.quoted) {
         user = m.quoted.sender;
@@ -44,7 +35,7 @@ var handler = async (m, { conn, participants, args }) => {
         await conn.groupParticipantsUpdate(m.chat, [user], 'remove');
         await m.reply(`✅ Usuario eliminado con éxito.`);
     } catch (e) {
-        await m.reply(`❌ No se pudo expulsar: ${e}`);
+        await m.reply(`❌ No pude expulsar al usuario. Puede que no sea admin o que no tenga permisos.`);
     }
 };
 
