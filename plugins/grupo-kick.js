@@ -28,11 +28,10 @@ var handler = async (m, { conn, participants, usedPrefix, command }) => {
 };
 
 handler.help = ['kick'];
-handler.tags = ['grupo'];
+handler.tags = ['group'];
 handler.command = ['kick','echar','hechar','sacar','ban'];
 handler.admin = true;
 handler.group = true;
-handler.register = true
 handler.botAdmin = true;
 
 export default handler;
