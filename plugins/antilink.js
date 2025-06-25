@@ -34,21 +34,31 @@ handler.group = true;
 handler.help = ['on antilink', 'off antilink', 'on autoread', 'off autoread'];
 handler.tags = ['group'];
 
+// 🧠 Hook que se ejecuta en cada mensaje antes de comandos
 handler.before = async function (m, { conn, isAdmin, isOwner }) {
   if (!m.isGroup) return;
 
   const chat = global.db.data.chats[m.chat] || {};
 
-  // 📖 Leer mensajes si autoread está activado
+  // ✅ Auto lectura si está activado
   if (chat.autoread) {
-    await conn.chatRead(m.chat);
-    console.log('📖 Chat marcado como leído (✓✓ azul)');
+    try {
+      if (typeof conn.chatRead === 'function') {
+        await conn.chatRead(m.chat);
+        console.log('📖 Chat marcado como leído (✓✓ azul)');
+      } else if (m.key?.id) {
+        await conn.sendMessage(m.chat, { read: true });
+        console.log('📖 Chat marcado como leído (modo alterno)');
+      }
+    } catch (e) {
+      console.error('❌ Error al marcar como leído:', e);
+    }
   }
 
-  // 🚫 Si antilink no está activado, salir
+  // 🚫 Si Antilink no está activado, salir
   if (!chat.antilink) return;
 
-  // 🛡️ No actuar si es admin, dueño o el mismo bot
+  // 🚫 Ignorar si es admin, owner o el mismo bot
   if (isAdmin || isOwner || m.fromMe) return;
 
   const text = m?.text || '';
@@ -59,21 +69,22 @@ handler.before = async function (m, { conn, isAdmin, isOwner }) {
   const delet = m.key.participant;
   const msgID = m.key.id;
 
-  // 🧪 Ignorar si es el link del mismo grupo
+  // ❎ Ignora si es el link del mismo grupo
   try {
     const ownGroupLink = `https://chat.whatsapp.com/${await conn.groupInviteCode(m.chat)}`;
     if (text.includes(ownGroupLink)) return;
   } catch (e) {
-    console.error('❌ Error al obtener el link del grupo:', e);
+    console.error('⚠️ Error al obtener el link del grupo:', e);
   }
 
-  // 💣 Acción: eliminar y expulsar
   try {
+    // 🗣️ Mensaje de advertencia
     await conn.sendMessage(m.chat, {
       text: `🚫 Hey ${userTag}, los enlaces no están permitidos acá. Chau w`,
       mentions: [m.sender]
     }, { quoted: m });
 
+    // 🧹 Eliminar mensaje
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
@@ -83,6 +94,7 @@ handler.before = async function (m, { conn, isAdmin, isOwner }) {
       }
     });
 
+    // 👢 Expulsar
     await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
 
   } catch (e) {
