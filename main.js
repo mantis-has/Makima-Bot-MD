@@ -248,7 +248,7 @@ async function connectionUpdate(update) {
     // Assuming yukiJadiBot function is defined somewhere accessible.
     // If not, you'll need to import or define it.
     // For this example, I'm assuming it's available.
-    if (global.yukiJadiBot) { // Changed yukiJadibts to yukiJadiBot as per likely function name
+    if (global.yukiJadibts) { // Changed yukiJadibts to yukiJadiBot as per likely function name
         if (!existsSync(global.rutaJadiBot)) {
             mkdirSync(global.rutaJadiBot, { recursive: true });
             console.log(chalk.bold.cyan(`La carpeta: ${global.rutaJadiBot} se creó correctamente.`)); // Changed jadi to global.rutaJadiBot
