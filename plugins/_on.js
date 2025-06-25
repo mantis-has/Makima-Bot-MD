@@ -37,7 +37,7 @@ handler.before = async (m, { conn }) => {
   if (!m.isGroup) return;
   const chat = global.db.data.chats[m.chat] ||= {};
 
-  // ================== Antilink ===================
+  // Antilink
   if (chat.antilink) {
     if (!(await isAdminOrOwner(m, conn))) {
       const text = m?.text || '';
@@ -78,7 +78,7 @@ handler.before = async (m, { conn }) => {
     }
   }
 
-  // ================== Welcome / Bye ===================
+  // Welcome / Bye
   if (chat.welcome) {
     const groupMetadata = await conn.groupMetadata(m.chat);
     const groupSize = groupMetadata.participants.length;
@@ -91,7 +91,7 @@ handler.before = async (m, { conn }) => {
       profilePic = defaultImage;
     }
 
-    if (m.messageStubType === 27) { // 👋 Entrada
+    if (m.messageStubType === 27) { // Entrada
       const txtWelcome = '🌸 𝑩𝑰𝑬𝑵𝑽𝑬𝑵𝑰𝑫@ 🌸';
       const bienvenida = `
 ✿ Bienvenid@ a *${groupMetadata.subject}* 🌺
@@ -107,11 +107,11 @@ ${global.welcom1 || ''}
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
         caption: `${txtWelcome}\n\n${bienvenida}`,
-        mentions: [m.sender]
+        contextInfo: { mentionedJid: [m.sender] }
       });
     }
 
-    if (m.messageStubType === 28 || m.messageStubType === 32) { // 👋 Salida
+    if (m.messageStubType === 28 || m.messageStubType === 32) { // Salida
       const txtBye = '🌸 𝑯𝑨𝑺𝑻𝑨 𝑳𝑼𝑬𝑮𝑶 🌸';
       const despedida = `
 ✿ Adiós de *${groupMetadata.subject}* 🥀
@@ -127,13 +127,12 @@ ${global.welcom2 || ''}
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
         caption: `${txtBye}\n\n${despedida}`,
-        mentions: [m.sender]
+        contextInfo: { mentionedJid: [m.sender] }
       });
     }
   }
 };
 
-// Función para detectar si el usuario que mandó es admin
 async function isAdminOrOwner(m, conn) {
   try {
     const groupMetadata = await conn.groupMetadata(m.chat);
