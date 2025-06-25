@@ -1,7 +1,5 @@
 import fs from 'fs'
-import { promises as fsp } from 'fs'
 import { join } from 'path'
-import fetch from 'node-fetch'
 import { xpRange } from '../lib/levelling.js'
 
 const tags = {
@@ -23,7 +21,7 @@ const defaultMenu = {
 https://theadonix-api.vercel.app
 
 %readmore`.trimStart(),
-  header: '*`%category`*',
+  header: '> *%category*',
   body: '• %cmd %islimit %isPremium\n',
   footer: '',
   after: '',
@@ -89,7 +87,6 @@ const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
       }
     }
 
-    // ✅ Leer nombre personalizado del subbot
     let nombreBot = global.namebot || 'Bot'
     try {
       const sessionId = conn?.auth?.creds?.me?.id?.split(':')[0]
@@ -172,19 +169,7 @@ const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
         caption: text.trim(),
         contextInfo: {
           mentionedJid: conn.parseMention(text.trim()),
-          isForwarded: true,
-          forwardedNewsletterMessageInfo: {
-            newsletterJid: '120363420941524030@newsletter',
-            newsletterName: '✧ Memes y más ✧',
-          },
-          externalAdReply: {
-            title: '❀ ʏᴜʀᴜ ʏᴜʀɪ ✧',
-            body: '',
-            thumbnail: fs.readFileSync('./storage/img/menu2.jpg'),
-            sourceUrl: 'https://theadonix-api.vercel.app',
-            mediaType: 1,
-            renderLargerThumbnail: true
-          }
+          isForwarded: true
         }
       },
       { quoted: m }
