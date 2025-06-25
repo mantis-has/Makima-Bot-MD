@@ -163,6 +163,6 @@ const downloadVideo = async (conn, m, video, title) => {
 };
 
 handler.command = handler.help = ['play', 'playaudio', 'ytmp3', 'play2', 'ytv', 'ytmp4'];
-handler.tags = ['descargas'];
+handler.tags = ['downloader'];
 
 export default handler;
