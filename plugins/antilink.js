@@ -51,7 +51,7 @@ handler.before = async function (m, { conn, isAdmin, isOwner }) {
   try {
     // Mensaje de advertencia
     await conn.sendMessage(m.chat, {
-      text: `🚫 ${userTag} envió un enlace prohibido.`,
+      text: `Hey ${userTag} los enlaces, no están permitidos acá :v. Chau w`,
       mentions: [m.sender]
     }, { quoted: m });
 
