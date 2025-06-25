@@ -18,7 +18,8 @@ async function isAdminOrOwner(m, conn) {
 const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   if (!m.isGroup) return m.reply('🔒 Solo funciona en grupos.');
 
-  const chat = global.db.data.chats[m.chat] ||= {};
+  // Asignación segura con ||= (en caso de que no exista)
+  const chat = global.db.data.chats[m.chat] ??= {};
   const type = (args[0] || '').toLowerCase();
 
   if (!['antilink', 'welcome'].includes(type)) {
@@ -47,7 +48,7 @@ handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink'];
 
 handler.before = async (m, { conn }) => {
   if (!m.isGroup) return;
-  const chat = global.db.data.chats[m.chat] ||= {};
+  const chat = global.db.data.chats[m.chat] ??= {};
 
   // ANTI LINK
   if (chat.antilink) {
