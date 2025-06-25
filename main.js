@@ -6,7 +6,7 @@ import path, { join } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { platform } from 'process'
 import * as ws from 'ws'
-import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch } from 'fs'
+import { readdirSync, statSync, unlinkSync, existsSync, readFileSync, watch, mkdirSync } from 'fs' // Added mkdirSync here
 import yargs from 'yargs'
 import chalk from 'chalk'
 import syntaxerror from 'syntax-error'
@@ -20,6 +20,7 @@ import lodash from 'lodash' // ✅ Usamos lodash directamente
 import readline from 'readline'
 import NodeCache from 'node-cache'
 import qrcode from 'qrcode-terminal'
+import { spawn } from 'child_process' // Added spawn for autocleartmp
 
 const { proto } = (await import('@whiskeysockets/baileys')).default
 const {
@@ -240,6 +241,39 @@ async function connectionUpdate(update) {
   if (global.db.data == null) await loadDatabase()
   if (connection === 'open') {
     console.log(chalk.yellow('Conectado correctamente.'))
+
+    // --- Start JadiBots reconnection logic ---
+    global.rutaJadiBot = join(__dirname, './JadiBots');
+    
+    // Assuming yukiJadiBot function is defined somewhere accessible.
+    // If not, you'll need to import or define it.
+    // For this example, I'm assuming it's available.
+    if (global.yukiJadiBot) { // Changed yukiJadibts to yukiJadiBot as per likely function name
+        if (!existsSync(global.rutaJadiBot)) {
+            mkdirSync(global.rutaJadiBot, { recursive: true });
+            console.log(chalk.bold.cyan(`La carpeta: ${global.rutaJadiBot} se creó correctamente.`)); // Changed jadi to global.rutaJadiBot
+        } else {
+            console.log(chalk.bold.cyan(`La carpeta: ${global.rutaJadiBot} ya está creada.`)); // Changed jadi to global.rutaJadiBot
+        }
+
+        const readRutaJadiBot = readdirSync(global.rutaJadiBot);
+        if (readRutaJadiBot.length > 0) {
+            const creds = 'creds.json';
+            for (const gjbts of readRutaJadiBot) {
+                const botPath = join(global.rutaJadiBot, gjbts);
+                const readBotPath = readdirSync(botPath);
+                if (readBotPath.includes(creds)) {
+                    // Assuming yukiJadiBot handles the connection and takes these parameters
+                    // Make sure yukiJadiBot is defined and imported correctly
+                    global.yukiJadiBot({ pathYukiJadiBot: botPath, m: null, conn, args: '', usedPrefix: '/', command: 'serbot' });
+                }
+            }
+        }
+    } else {
+        console.warn(chalk.yellow('Advertencia: La función global.yukiJadiBot no está definida. No se intentará reconectar los sub-bots.'));
+    }
+    // --- End JadiBots reconnection logic ---
+
   }
   const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
   if (reason === 405) {
