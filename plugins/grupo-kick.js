@@ -1,12 +1,11 @@
-var handler = async (m, { conn, participants, args }) => {
+var handler = async (m, { conn, args }) => {
     if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
     const groupMetadata = await conn.groupMetadata(m.chat);
-    
-    // No se chequea si el bot es admin, solo intenta expulsar
 
-    // Verificar si el que ejecuta es admin
-    const userParticipant = participants.find(p => p.id === m.sender);
+    // Buscar el participante que ejecuta el comando en la metadata oficial
+    const userParticipant = groupMetadata.participants.find(p => p.id === m.sender);
+
     const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin';
     if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
