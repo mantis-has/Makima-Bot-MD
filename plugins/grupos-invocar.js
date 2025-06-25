@@ -24,9 +24,9 @@ const handler = async (m, { conn, args, command, usedPrefix }) => {
   const total = groupMetadata.participants.length;
 
   const header = `
-╭────────────────────────╮
-│       ${decoEmoji2} 🗣️ MENCIÓN GENERAL ${decoEmoji2}       │
-╰────────────────────────╯
+╭──────────────────────╮
+│       ${decoEmoji2} *🗣️ MENCIÓN GENERAL* ${decoEmoji2}       │
+╰──────────────────────╯
 `;
 
   const info = `
@@ -44,7 +44,7 @@ ${decoEmoji1.repeat(1)}
 ${decoEmoji1.repeat(1)}
 ┊ 💜 Bot: ${global.botname || 'Bot'}
 ┊ 📅 Comando: ${usedPrefix}${command}
-╰────────────────────────╯
+╰──────────────────────╯
 `;
 
   const texto = header + info + cuerpo + footer;
