@@ -3,31 +3,48 @@ let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i;
 
 const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   if (!m.isGroup) return m.reply('🔒 Solo funciona en grupos.');
-  if (!(isAdmin || isOwner)) return m.reply('❌ Solo admins pueden usar este comando.');
 
-  const chat = global.db.data.chats[m.chat];
   const type = (args[0] || '').toLowerCase();
+  const chat = global.db.data.chats[m.chat];
 
-  if (!['antilink'].includes(type)) {
-    return m.reply(`✳️ Usa: *.on antilink* o *.off antilink*`);
+  // 🔐 Solo owners pueden activar autoread
+  const isAutoreadCmd = ['autoread'].includes(type);
+  if (isAutoreadCmd && !isOwner) return m.reply('🔐 Solo el dueño del bot puede usar esto.');
+
+  if (!['antilink', 'autoread'].includes(type)) {
+    return m.reply(`✳️ Usa:\n*.on antilink* o *.off antilink*\n*.on autoread* o *.off autoread*`);
   }
 
   const enable = command === 'on';
-  chat.antilink = enable;
-  m.reply(`✅ Antilink ${enable ? 'activado' : 'desactivado'} correctamente.`);
+  if (type === 'antilink') {
+    chat.antilink = enable;
+    return m.reply(`✅ Antilink ${enable ? 'activado' : 'desactivado'} correctamente.`);
+  }
+
+  if (type === 'autoread') {
+    chat.autoread = enable;
+    return m.reply(`✅ AutoRead ${enable ? 'activado' : 'desactivado'} correctamente.`);
+  }
 };
 
 handler.command = ['on', 'off'];
 handler.group = true;
-handler.botAdmin = false;
-handler.help = ['on antilink', 'off antilink'];
+handler.help = ['on antilink', 'off antilink', 'on autoread', 'off autoread'];
 handler.tags = ['group'];
 
-// 👇 Esta parte es la magia: se ejecuta en cada mensaje antes del resto
+// 🔄 Este se ejecuta antes de cada mensaje
 handler.before = async function (m, { conn, isAdmin, isOwner }) {
   if (!m.isGroup) return;
 
-  const chat = global.db.data.chats[m.chat];
+  const chat = global.db.data.chats[m.chat] || {};
+
+  // ✅ Leer mensaje si autoread está activado
+  if (chat.autoread) {
+    await conn.readMessages([m.key]);
+    console.log('📖 Mensaje marcado como leído');
+  }
+
+  // 🚫 Si antilink no está activado, no sigue
   if (!chat.antilink) return;
 
   if (isAdmin || isOwner || m.fromMe) return;
@@ -49,13 +66,11 @@ handler.before = async function (m, { conn, isAdmin, isOwner }) {
   }
 
   try {
-    // Mensaje de advertencia
     await conn.sendMessage(m.chat, {
-      text: `Hey ${userTag} los enlaces, no están permitidos acá :v. Chau w`,
+      text: `Hey ${userTag} los enlaces no están permitidos acá :v. Chau w`,
       mentions: [m.sender]
     }, { quoted: m });
 
-    // Intentar eliminar mensaje
     await conn.sendMessage(m.chat, {
       delete: {
         remoteJid: m.chat,
@@ -65,7 +80,6 @@ handler.before = async function (m, { conn, isAdmin, isOwner }) {
       }
     });
 
-    // Intentar expulsar
     await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove');
   } catch (e) {
     console.error('❌ No pude eliminar o expulsar:', e);
