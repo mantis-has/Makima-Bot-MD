@@ -19,7 +19,6 @@ const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
 
 handler.command = ['on', 'off'];
 handler.group = true;
-handler.admin = true;
 handler.botAdmin = false;
 handler.help = ['on antilink', 'off antilink'];
 handler.tags = ['group'];
