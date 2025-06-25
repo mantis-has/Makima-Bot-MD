@@ -27,82 +27,41 @@ https://theadonix-api.vercel.app
   after: '',
 }
 
-const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
+const handler = async (m, { conn, usedPrefix: _p }) => {
   try {
-    const _package = JSON.parse(
-      await fs.promises.readFile(join(__dirname, '../package.json'), 'utf-8').catch(() => '{}')
-    ) || {}
-
     const { exp, limit, level } = global.db.data.users[m.sender]
     const { min, xp, max } = xpRange(level, global.multiplier)
     const name = await conn.getName(m.sender)
 
     const d = new Date(Date.now() + 3600000)
     const locale = 'es'
-    const weton = ['Pahing', 'Pon', 'Wage', 'Kliwon', 'Legi'][Math.floor(d / 84600000) % 5]
     const week = d.toLocaleDateString(locale, { weekday: 'long' })
     const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
-    const dateIslamic = new Intl.DateTimeFormat(`${locale}-TN-u-ca-islamic`, {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    }).format(d)
-    const time = d.toLocaleTimeString(locale, {
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-    })
+    const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' })
 
-    const _uptime = process.uptime() * 1000
-    let _muptime
-    if (process.send) {
-      process.send('uptime')
-      _muptime = await new Promise((resolve) => {
-        process.once('message', resolve)
-        setTimeout(() => resolve(_uptime), 1000)
-      }) * 1
-    }
-
-    const uptime = clockString(_uptime)
-    const muptime = clockString(_muptime)
+    const uptime = clockString(process.uptime() * 1000)
     const totalreg = Object.keys(global.db.data.users).length
     const rtotalreg = Object.values(global.db.data.users).filter(user => user.registered).length
 
-    const help = Object.values(global.plugins || {}).filter(plugin => !plugin.disabled).map(plugin => ({
+    const help = Object.values(global.plugins).filter(plugin => !plugin.disabled).map(plugin => ({
       help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
       tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
       prefix: 'customPrefix' in plugin,
       limit: plugin.limit,
-      premium: plugin.premium,
-      enabled: !plugin.disabled,
+      premium: plugin.premium
     }))
 
-    for (let plugin of help) {
-      if (plugin && plugin.tags) {
-        for (let tag of plugin.tags) {
-          if (!(tag in tags) && tag) {
-            tags[tag] = tag
-          }
-        }
-      }
-    }
-
     let nombreBot = global.namebot || 'Bot'
-    try {
-      const sessionId = conn?.auth?.creds?.me?.id?.split(':')[0]
-      if (sessionId) {
-        const configPath = join(`./subbots/sesion-${sessionId}`, 'config.json')
-        if (fs.existsSync(configPath)) {
-          const config = JSON.parse(fs.readFileSync(configPath))
-          if (config?.namebot) nombreBot = config.namebot
-        }
-      }
-    } catch (e) {
-      console.log('❌ Error leyendo nombre personalizado del Sub-Bot:', e)
-    }
+
+    // Verifica si es subbot o el principal
+    const botPrincipal = '+50493059810'
+    const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
+    const esPrincipal = botActual === botPrincipal.replace(/\D/g, '')
+    const tipoBot = esPrincipal ? '*☁︎ Bot:* Principal 🅥' : '*☁︎ Bot:* Sub Bot 🅑'
 
     const menuConfig = conn.menu || defaultMenu
     const _text = [
+      tipoBot,
       menuConfig.before,
       ...Object.keys(tags).map(tag => {
         return [
@@ -119,42 +78,28 @@ const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
           menuConfig.footer,
         ].join('\n')
       }),
-      conn.user.jid === global.conn.user.jid ? '' : '',
       menuConfig.after
     ].join('\n')
 
     const replace = {
       '%': '%',
       p: _p,
-      uptime,
-      muptime,
       botname: nombreBot,
       taguser: '@' + m.sender.split('@')[0],
-      wasp: '@0',
-      me: conn.getName(conn.user.jid),
-      npmname: _package.name,
-      version: _package.version,
-      npmdesc: _package.description,
-      npmmain: _package.main,
-      author: _package.author?.name,
-      license: _package.license,
       exp: exp - min,
       maxexp: xp,
       totalexp: exp,
       xp4levelup: max - exp,
-      github: _package.homepage?.url || '[unknown github url]',
-      greeting,
       level,
       limit,
       name,
-      weton,
       week,
       date,
-      dateIslamic,
       time,
       totalreg,
       rtotalreg,
       readmore: readMore,
+      greeting,
     }
 
     let text = _text.replace(
@@ -168,7 +113,7 @@ const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
         image: fs.readFileSync('./storage/img/menu.jpg'),
         caption: text.trim(),
         contextInfo: {
-          mentionedJid: conn.parseMention(text.trim()),
+          mentionedJid: conn.parseMention(text),
           isForwarded: true
         }
       },
@@ -177,7 +122,7 @@ const handler = async (m, { conn, usedPrefix: _p, __dirname }) => {
 
   } catch (e) {
     conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
-    throw e
+    console.error('❌ Error en el menú:', e)
   }
 }
 
