@@ -141,6 +141,65 @@ const connectionOptions = {
 
 global.conn = makeWASocket(connectionOptions)
 
+// Función para reconectar un sub-bot
+async function reconnectSubBot(botPath) {
+    console.log(chalk.yellow(`Intentando reconectar sub-bot en: ${botPath}`));
+    try {
+        const { state: subBotState, saveCreds: saveSubBotCreds } = await useMultiFileAuthState(botPath);
+        const subBotConn = makeWASocket({
+            version: version,
+            logger,
+            printQRInTerminal: false,
+            auth: {
+                creds: subBotState.creds,
+                keys: makeCacheableSignalKeyStore(subBotState.keys, logger),
+            },
+            browser: Browsers.ubuntu('Chrome'),
+            markOnlineOnclientect: false,
+            generateHighQualityLinkPreview: true,
+            syncFullHistory: true,
+            retryRequestDelayMs: 10,
+            transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 10 },
+            maxMsgRetryCount: 15,
+            appStateMacVerification: {
+                patch: false,
+                snapshot: false,
+            },
+            getMessage: async (key) => {
+                const jid = jidNormalizedUser(key.remoteJid)
+                const msg = await store.loadMessage(jid, key.id)
+                return msg?.message || ''
+            },
+        });
+
+        // Configura los listeners para el sub-bot
+        subBotConn.ev.on('connection.update', (update) => {
+            const { connection, lastDisconnect } = update;
+            if (connection === 'open') {
+                console.log(chalk.green(`Sub-bot conectado correctamente: ${botPath}`));
+            } else if (connection === 'close') {
+                const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+                console.error(chalk.red(`Sub-bot desconectado en ${botPath}. Razón: ${reason}`));
+                // Puedes agregar lógica para reintentar la conexión del sub-bot aquí si es necesario
+            }
+        });
+        subBotConn.ev.on('creds.update', saveSubBotCreds);
+
+        // Puedes agregar el manejador de mensajes si el sub-bot necesita procesarlos
+        // subBotConn.handler = handler.handler.bind(subBotConn);
+        // subBotConn.ev.on('messages.upsert', subBotConn.handler);
+
+        // Guarda la conexión del sub-bot en un objeto global si necesitas acceder a ella más tarde
+        if (!global.subBots) {
+            global.subBots = {};
+        }
+        global.subBots[path.basename(botPath)] = subBotConn; // Usa el nombre de la carpeta como clave
+        
+    } catch (e) {
+        console.error(chalk.red(`Error al reconectar sub-bot en ${botPath}:`), e);
+    }
+}
+
 async function handleLogin() {
   if (conn.authState.creds.registered) {
     console.log(chalk.green('Sesión ya está registrada.'))
@@ -242,37 +301,29 @@ async function connectionUpdate(update) {
   if (connection === 'open') {
     console.log(chalk.yellow('Conectado correctamente.'))
 
-    // --- Start JadiBots reconnection logic ---
-    global.rutaJadiBot = join(__dirname, './JadiBots');
+    // --- Lógica de reconexión de sub-bots ---
+    const rutaJadiBot = join(__dirname, './JadiBots');
     
-    // Assuming yukiJadiBot function is defined somewhere accessible.
-    // If not, you'll need to import or define it.
-    // For this example, I'm assuming it's available.
-    if (global.yukiJadibts) { // Changed yukiJadibts to yukiJadiBot as per likely function name
-        if (!existsSync(global.rutaJadiBot)) {
-            mkdirSync(global.rutaJadiBot, { recursive: true });
-            console.log(chalk.bold.cyan(`La carpeta: ${global.rutaJadiBot} se creó correctamente.`)); // Changed jadi to global.rutaJadiBot
-        } else {
-            console.log(chalk.bold.cyan(`La carpeta: ${global.rutaJadiBot} ya está creada.`)); // Changed jadi to global.rutaJadiBot
-        }
+    if (!existsSync(rutaJadiBot)) {
+        mkdirSync(rutaJadiBot, { recursive: true });
+        console.log(chalk.bold.cyan(`La carpeta: ${rutaJadiBot} se creó correctamente.`));
+    } else {
+        console.log(chalk.bold.cyan(`La carpeta: ${rutaJadiBot} ya está creada.`));
+    }
 
-        const readRutaJadiBot = readdirSync(global.rutaJadiBot);
-        if (readRutaJadiBot.length > 0) {
-            const creds = 'creds.json';
-            for (const gjbts of readRutaJadiBot) {
-                const botPath = join(global.rutaJadiBot, gjbts);
-                const readBotPath = readdirSync(botPath);
-                if (readBotPath.includes(creds)) {
-                    // Assuming yukiJadiBot handles the connection and takes these parameters
-                    // Make sure yukiJadiBot is defined and imported correctly
-                    global.yukiJadiBot({ pathYukiJadiBot: botPath, m: null, conn, args: '', usedPrefix: '/', command: 'serbot' });
-                }
+    const readRutaJadiBot = readdirSync(rutaJadiBot);
+    if (readRutaJadiBot.length > 0) {
+        const credsFile = 'creds.json';
+        for (const subBotDir of readRutaJadiBot) {
+            const botPath = join(rutaJadiBot, subBotDir);
+            const readBotPath = readdirSync(botPath);
+            if (readBotPath.includes(credsFile)) {
+                // Llama a la función para reconectar cada sub-bot
+                await reconnectSubBot(botPath);
             }
         }
-    } else {
-        console.warn(chalk.yellow('Advertencia: La función global.yukiJadiBot no está definida. No se intentará reconectar los sub-bots.'));
     }
-    // --- End JadiBots reconnection logic ---
+    // --- Fin de la lógica de reconexión de sub-bots ---
 
   }
   const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
