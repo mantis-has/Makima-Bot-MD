@@ -1,156 +1,118 @@
-import fetch from 'node-fetch' // 🔧 NECESARIO
-import yts from "yt-search";
-import { ytv, yta } from "@Im-Ado/AdonixScraper";
+import fetch from 'node-fetch'
+import yts from 'yt-search'
+import { yta, ytv } from '@Im-Ado/AdonixScraper'
 
-const limit = 100; // MB
+const dev = 'Ado'
+const limitMB = 100
+const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
 
 const handler = async (m, { conn, text, command }) => {
-  if (!text) return m.reply("> Ingresa el nombre de un video o una URL de YouTube.");
-
-  if (m.react) await m.react("🕛");
-
-  console.log("💎 Buscando en YouTube...");
-
   try {
-    let res = await yts(text);
+    if (!text?.trim()) return conn.reply(m.chat, '❀ Por favor, ingresa el nombre o link de YouTube.', m)
 
-    if (!res || !res.all || !Array.isArray(res.all) || res.all.length === 0) {
-      return m.reply("🌻 No se encontraron resultados para tu búsqueda.");
+    let videoIdMatch = text.match(youtubeRegexID)
+    let ytsearch = await yts(videoIdMatch ? 'https://youtu.be/' + videoIdMatch[1] : text)
+
+    let video = null
+    if (videoIdMatch) {
+      const videoId = videoIdMatch[1]
+      video = ytsearch.all?.find(v => v.videoId === videoId) || ytsearch.videos?.find(v => v.videoId === videoId)
     }
+    video = video || ytsearch.all?.[0] || ytsearch.videos?.[0]
 
-    let video = res.all[0];
+    if (!video || typeof video !== 'object') return conn.reply(m.chat, '✧ No se encontraron resultados válidos.', m)
 
-    if (!video) {
-      return m.reply("❌ No se pudo obtener información del video.");
-    }
+    let { title, thumbnail, timestamp, views, ago, url, author } = video
+    title = title || 'Sin título'
+    thumbnail = (thumbnail && thumbnail.startsWith('http')) ? thumbnail : null
+    timestamp = timestamp || 'Desconocido'
+    views = formatViews(views)
+    ago = ago || 'Desconocido'
+    url = url || 'Desconocido'
+    const canal = author?.name || 'Desconocido'
 
-    let durationSeconds = 0;
-    let durationTimestamp = "Desconocida";
-
-    if (video.duration) {
-      durationSeconds = Number(video.duration.seconds) || 0;
-      durationTimestamp = video.duration.timestamp || "Desconocida";
-    }
-
-    const authorName = video.author?.name || "Desconocido";
-    const title = video.title || "Sin título";
-    const views = video.views || "Desconocidas";
-    const thumbnail = video.thumbnail || "";
-
-    const processingMessage = `*「✦」${title}*
-> *❀ Canal:* ${authorName}
-> *✐ Duración:* ${durationTimestamp}
-> *☄︎ Vistas:* ${views}
-
-✿ Aguarde, unos segundos..`;
-
-    let sentMessage;
+    let thumb = null
     if (thumbnail) {
       try {
-        sentMessage = await conn.sendFile(m.chat, thumbnail, "thumb.jpg", processingMessage, m);
-      } catch (thumbError) {
-        console.log("⚠ No se pudo enviar la miniatura:", thumbError.message);
-        sentMessage = await m.reply(processingMessage);
+        thumb = (await conn.getFile(thumbnail)).data
+      } catch (e) {
+        thumb = null
       }
-    } else {
-      sentMessage = await m.reply(processingMessage);
     }
 
-    if (command === "play" || command === "playaudio" || command === "ytmp3") {
-      await downloadAudio(conn, m, video, title);
-    } else if (command === "play2" || command === "playvid" || command === "ytv" || command === "ytmp4") {
-      await downloadVideo(conn, m, video, title);
-    }
+    const info = `*「✦」Descargando: ${title}*\n\n` +
+                 `❀ *Canal:* ${canal}\n` +
+                 `✰ *Vistas:* ${views}\n` +
+                 `ⴵ *Duración:* ${timestamp}\n` +
+                 `✐ *Publicado:* ${ago}\n` +
+                 `🜸 *Link:* ${url}`
 
-  } catch (error) {
-    console.error("❌ Error general:", error);
-    await m.reply(`❌ Hubo un error al procesar tu solicitud:\n\n${error.message}`);
-    if (m.react) await m.react("❌");
-  }
-};
-
-const downloadAudio = async (conn, m, video, title) => {
-  try {
-    console.log("✦ Solicitando audio...");
-
-    const api = await yta(video.url);
-
-    if (!api || !api.status || !api.result || !api.result.download) {
-      throw new Error("No se pudo obtener el enlace de descarga del audio");
-    }
-
-    console.log("✿ Enviando audio...");
-    await conn.sendFile(
-      m.chat, 
-      api.result.download, 
-      `${(api.result.title || title).replace(/[^\w\s]/gi, '')}.mp3`, 
-      `✦ *${api.result.title || title}*`, 
-      m
-    );
-
-    if (m.react) await m.react("✅");
-    console.log("✅ Audio enviado exitosamente");
-
-  } catch (error) {
-    console.error("❌ Error descargando audio:", error);
-    await m.reply(`❌ Error al descargar el audio:\n\n${error.message}`);
-    if (m.react) await m.react("❌");
-  }
-};
-
-const downloadVideo = async (conn, m, video, title) => {
-  try {
-    console.log("❀ Solicitando video...");
-
-    const api = await ytv(video.url);
-
-    if (!api || !api.url) {
-      throw new Error("No se pudo obtener el enlace de descarga del video");
-    }
-
-    let sizemb = 0;
-    try {
-      const res = await fetch(api.url, { method: 'HEAD' });
-      const cont = res.headers.get('content-length');
-      if (cont) {
-        const bytes = parseInt(cont, 10);
-        sizemb = bytes / (1024 * 1024);
+    const contexto = {
+      contextInfo: {
+        externalAdReply: {
+          title: namebot,
+          body: dev,
+          mediaType: 1,
+          previewType: 0,
+          mediaUrl: url,
+          sourceUrl: url,
+          thumbnail: thumb,
+          renderLargerThumbnail: true,
+        }
       }
-    } catch (sizeError) {
-      console.log("⚠ No se pudo obtener el tamaño del archivo:", sizeError.message);
     }
 
-    if (sizemb > limit && sizemb > 0) {
-      return m.reply(`✤ El archivo es muy pesado (${sizemb.toFixed(2)} MB). El límite es ${limit} MB. Intenta con un video más corto.`);
+    await conn.reply(m.chat, info, m, contexto)
+
+    if (['play', 'yta', 'ytmp3', 'playaudio'].includes(command)) {
+      const api = await yta(url)
+      const result = api?.result?.download
+      if (!result) throw new Error('❌ Enlace de descarga de audio no disponible.')
+      await conn.sendMessage(m.chat, {
+        audio: { url: result },
+        fileName: `${(api.result.title || title)}.mp3`,
+        mimetype: 'audio/mpeg'
+      }, { quoted: m })
     }
 
-    const doc = sizemb >= limit && sizemb > 0;
+    if (['play2', 'ytv', 'ytmp4', 'mp4'].includes(command)) {
+      const api = await ytv(url)
+      const result = api?.url
+      if (!result) throw new Error('❌ Enlace de descarga de video no disponible.')
 
-    console.log("✧ Se esta enviando tu vídeo..");
-    await conn.sendFile(
-      m.chat, 
-      api.url, 
-      `${(api.title || title).replace(/[^\w\s]/gi, '')}.mp4`, 
-      `✦ *${api.title || title}*`, 
-      m, 
-      null, 
-      {
-        asDocument: doc,
-        mimetype: "video/mp4",
+      let sizeMB = 0
+      try {
+        const head = await fetch(result, { method: 'HEAD' })
+        const length = head.headers.get('content-length')
+        if (length) sizeMB = parseInt(length) / (1024 * 1024)
+      } catch (e) {
+        console.log('⚠ No se pudo obtener el tamaño:', e.message)
       }
-    );
 
-    if (m.react) await m.react("✅");
-    console.log("✅ Video enviado exitosamente");
+      if (sizeMB > limitMB && sizeMB > 0) {
+        return conn.reply(m.chat, `🚫 El archivo es muy pesado (${sizeMB.toFixed(2)} MB). El límite es ${limitMB} MB.`, m)
+      }
 
-  } catch (error) {
-    console.error("❌ Error descargando video:", error);
-    await m.reply(`❌ Error al descargar el video:\n\n${error.message}`);
-    if (m.react) await m.react("❌");
+      await conn.sendFile(m.chat, result, `${(api.title || title)}.mp4`, title, m)
+    }
+
+  } catch (e) {
+    console.error('❌ Error general:', e)
+    return conn.reply(m.chat, `⚠︎ Ocurrió un error:\n\n${e.message}`, m)
   }
-};
+}
 
-handler.command = handler.help = ['play', 'playaudio', 'ytmp3', 'play2', 'ytv', 'ytmp4'];
-handler.tags = ['downloader'];
+handler.command = handler.help = ['play', 'yta', 'ytmp3', 'play2', 'ytv', 'ytmp4', 'playaudio', 'mp4']
+handler.tags = ['descargas']
+handler.group = false // o true si lo querés solo para grupos
 
-export default handler;
+export default handler
+
+function formatViews(views) {
+  if (!views || views === 'Desconocido') return 'Desconocido'
+  if (typeof views === 'string') return views
+  if (views >= 1_000_000_000) return `${(views / 1_000_000_000).toFixed(1)}B`
+  if (views >= 1_000_000) return `${(views / 1_000_000).toFixed(1)}M`
+  if (views >= 1_000) return `${(views / 1_000).toFixed(1)}K`
+  return views.toString()
+}
