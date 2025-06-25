@@ -6,35 +6,53 @@ const handler = async (m, { conn, args, command, usedPrefix }) => {
   // Debug: imprimir participantes y roles
   console.log('🔎 Participantes del grupo:');
   groupMetadata.participants.forEach(p => {
-    console.log(`- ${p.id} admin: ${p.admin || 'miembro'}`);
+    console.log(`- ${p.id} | rol: ${p.admin || 'miembro'}`);
   });
 
   const userParticipant = groupMetadata.participants.find(p => p.id === m.sender);
-
-  console.log('🔎 Info usuario que manda:', userParticipant);
-
   const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin' || m.sender === groupMetadata.owner;
 
   if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
-  const customEmoji = global.db.data.chats[m.chat]?.customEmoji || '☕';
-  m.react(customEmoji);
+  const mainEmoji = global.db.data.chats[m.chat]?.customEmoji || '☕';
+  const decoEmoji1 = '✨';
+  const decoEmoji2 = '📢';
 
-  const mensaje = args.join` ` || 'Sin mensaje personalizado';
+  m.react(mainEmoji);
+
+  const mensaje = args.join(' ') || 'Sin mensaje personalizado';
   const total = groupMetadata.participants.length;
 
-  const header = `╭─────────────╮\n│   🗣️ *MENCIÓN GENERAL*  │\n╰─────────────╯\n`;
-  const info = `💌 *Mensaje:* ${mensaje}\n👥 *Miembros:* ${total}\n${customEmoji.repeat(1)}\n`;
+  const header = `
+╭────────────────────────╮
+│       ${decoEmoji2} 🗣️ MENCIÓN GENERAL ${decoEmoji2}       │
+╰────────────────────────╯
+`;
+
+  const info = `
+💌 Mensaje: ${mensaje}
+👥 Miembros: ${total}
+${decoEmoji1.repeat(1)}
+`;
 
   let cuerpo = '';
   for (const mem of groupMetadata.participants) {
-    cuerpo += `╭ ${customEmoji} @${mem.id.split('@')[0]}\n`;
+    cuerpo += `• ${mainEmoji} @${mem.id.split('@')[0]}\n`;
   }
 
-  const footer = `${customEmoji.repeat(15)}\n┊ 💜 *Bot:* ${global.botname || 'Bot'}\n┊ 📅 *Comando:* ${usedPrefix}${command}\n╰──────────────╯`;
+  const footer = `
+${decoEmoji1.repeat(1)}
+┊ 💜 Bot: ${global.botname || 'Bot'}
+┊ 📅 Comando: ${usedPrefix}${command}
+╰────────────────────────╯
+`;
 
-  const texto = [header, info, cuerpo, footer].join('\n');
-  conn.sendMessage(m.chat, { text: texto.trim(), mentions: groupMetadata.participants.map(a => a.id) });
+  const texto = header + info + cuerpo + footer;
+
+  await conn.sendMessage(m.chat, {
+    text: texto.trim(),
+    mentions: groupMetadata.participants.map(p => p.id)
+  });
 };
 
 handler.help = ['invocar *<mensaje opcional>*'];
