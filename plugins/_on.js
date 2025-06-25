@@ -1,7 +1,19 @@
+import fetch from 'node-fetch';
+
 let linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i;
 let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i;
 
 const defaultImage = 'https://qu.ax/eOCUt.jpg';
+
+async function isAdminOrOwner(m, conn) {
+  try {
+    const groupMetadata = await conn.groupMetadata(m.chat);
+    const participant = groupMetadata.participants.find(p => p.id === m.sender);
+    return participant?.admin === 'admin' || participant?.admin === 'superadmin' || m.fromMe;
+  } catch {
+    return false;
+  }
+}
 
 const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   if (!m.isGroup) return m.reply('🔒 Solo funciona en grupos.');
@@ -37,7 +49,7 @@ handler.before = async (m, { conn }) => {
   if (!m.isGroup) return;
   const chat = global.db.data.chats[m.chat] ||= {};
 
-  // Antilink
+  // ANTI LINK
   if (chat.antilink) {
     if (!(await isAdminOrOwner(m, conn))) {
       const text = m?.text || '';
@@ -78,69 +90,61 @@ handler.before = async (m, { conn }) => {
     }
   }
 
-  // Welcome / Bye
+  // WELCOME / BYE
   if (chat.welcome) {
     const groupMetadata = await conn.groupMetadata(m.chat);
     const groupSize = groupMetadata.participants.length;
-    const userMention = `@${m.sender.split('@')[0]}`;
+    const userMention = `@${m.messageStubParameters?.[0]?.split('@')[0] || m.sender.split('@')[0]}`;
     let profilePic;
 
     try {
-      profilePic = await conn.profilePictureUrl(m.sender, 'image');
+      profilePic = await conn.profilePictureUrl(m.messageStubParameters?.[0] || m.sender, 'image');
     } catch {
       profilePic = defaultImage;
     }
 
     if (m.messageStubType === 27) { // Entrada
-      const txtWelcome = '🌸 𝑩𝑰𝑬𝑵𝑽𝑬𝑵𝑰𝑫@ 🌸';
+      const txtWelcome = '🌸 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳@ 🌸';
       const bienvenida = `
-✿ Bienvenid@ a *${groupMetadata.subject}* 🌺
-✰ ${userMention}
-${global.welcom1 || ''}
+✿ *Bienvenid@* a *${groupMetadata.subject}* 🌺
 
-✦ Ahora somos *${groupSize}* miembros
-•(=^･ω･^=)• ¡Disfrutá tu estadía en el grupo!
+✰ ${userMention} ¡qué gusto verte por aquí!
 
-> ✧ Usa *#help* para ver los comandos disponibles
+✦ Ahora somos *${groupSize}* integrantes activos 🧑‍🤝‍🧑
+
+🐾 Disfruta y participa, este grupo es pa’ compartir y pasarla bien.
+
+> Usa *#help* para conocer todos los comandos disponibles 👾
       `.trim();
 
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
         caption: `${txtWelcome}\n\n${bienvenida}`,
-        contextInfo: { mentionedJid: [m.sender] }
+        contextInfo: { mentionedJid: [userMention.replace('@', '') + '@s.whatsapp.net'] }
       });
     }
 
     if (m.messageStubType === 28 || m.messageStubType === 32) { // Salida
-      const txtBye = '🌸 𝑯𝑨𝑺𝑻𝑨 𝑳𝑼𝑬𝑮𝑶 🌸';
+      const txtBye = '🌸 𝙰𝙳𝙸Ó𝚂 🌸';
       const despedida = `
-✿ Adiós de *${groupMetadata.subject}* 🥀
-✰ ${userMention}
-${global.welcom2 || ''}
+✿ *Adiós* de *${groupMetadata.subject}* 🥀
 
-✦ Ahora somos *${groupSize}* miembros
-•(=；ω；=)• ¡Te esperamos pronto de vuelta!
+✰ ${userMention} esperamos verte pronto de nuevo ✨
 
-> ✧ Usa *#help* si necesitas ayuda 🫶
+✦ Somos *${groupSize}* aún, cuidemos este espacio.
+
+💌 Que tengas un excelente día, nos vemos en otra ocasión.
+
+> Usa *#help* si necesitas algo o quieres volver 🙌
       `.trim();
 
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
         caption: `${txtBye}\n\n${despedida}`,
-        contextInfo: { mentionedJid: [m.sender] }
+        contextInfo: { mentionedJid: [userMention.replace('@', '') + '@s.whatsapp.net'] }
       });
     }
   }
 };
-
-async function isAdminOrOwner(m, conn) {
-  try {
-    const groupMetadata = await conn.groupMetadata(m.chat);
-    const participant = groupMetadata.participants.find(p => p.id === m.sender);
-    return participant?.admin || m.fromMe;
-  } catch {
-    return false;
-  }
-}
 
 export default handler;
