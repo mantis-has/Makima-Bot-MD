@@ -2,27 +2,22 @@ var handler = async (m, { conn, participants, args }) => {
     if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
     const groupMetadata = await conn.groupMetadata(m.chat);
-    const botNumber = conn.user.jid.split('@')[0]; // número limpio del bot
+    const botJid = conn.user.jid;
 
-    // Buscar al bot en participantes con coincidencia parcial
-    const botParticipant = participants.find(p => p.id.includes(botNumber));
+    // Buscar el ID exacto del bot dentro del grupo
+    const botParticipant = participants.find(p => p.id === botJid || p.id.includes(botJid.split('@')[0]));
+    console.log('🧠 BotJID:', botJid)
+    console.log('🧠 Detectado como:', botParticipant)
+
     const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
+    if (!isBotAdmin) return m.reply('🧃 No soy admin, no puedo expulsar a nadie.');
 
-    if (!isBotAdmin) {
-        console.log('❗ No detectado como admin');
-        console.log('BotNumber:', botNumber);
-        console.log('Bot en participants:', botParticipant);
-        console.log('Participants:', participants.map(p => p.id));
-        return m.reply('🧃 No soy admin, no puedo expulsar a nadie.');
-    }
+    // Verificar si el usuario que usa el comando es admin
+    const userParticipant = participants.find(p => p.id === m.sender);
+    const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin';
+    if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
-    // Validar si el que ejecuta el comando es admin
-    const senderParticipant = participants.find(p => p.id === m.sender);
-    const isSenderAdmin = senderParticipant?.admin === 'admin' || senderParticipant?.admin === 'superadmin';
-
-    if (!isSenderAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
-
-    // Obtener usuario a expulsar
+    // Obtener el user a expulsar
     let user;
     if (m.mentionedJid[0]) {
         user = m.mentionedJid[0];
@@ -33,15 +28,15 @@ var handler = async (m, { conn, participants, args }) => {
         if (!number) return m.reply('⚠️ Número inválido.');
         user = number + '@s.whatsapp.net';
     } else {
-        return m.reply('🚫 Mencioná, respondé o escribí un número para expulsar.');
+        return m.reply('🚫 Mencioná, respondé o escribí el número a expulsar.');
     }
 
     const ownerGroup = groupMetadata.owner || m.chat.split`-`[0] + '@s.whatsapp.net';
     const ownerBot = global.owner[0][0] + '@s.whatsapp.net';
 
-    if (user === conn.user.jid) return m.reply(`😹 No me puedo sacar a mí mismo`);
-    if (user === ownerGroup) return m.reply(`👑 Ese es el dueño del grupo, no se puede`);
-    if (user === ownerBot) return m.reply(`💥 Ese es el dueño del bot, ni lo toqués`);
+    if (user === botJid) return m.reply(`😹 No me puedo sacar a mí mismo`);
+    if (user === ownerGroup) return m.reply(`👑 Ese es el dueño del grupo`);
+    if (user === ownerBot) return m.reply(`💥 Ese es el dueño del bot`);
 
     try {
         await conn.groupParticipantsUpdate(m.chat, [user], 'remove');
