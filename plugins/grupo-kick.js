@@ -2,22 +2,24 @@ var handler = async (m, { conn, participants, args }) => {
     if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
     const groupMetadata = await conn.groupMetadata(m.chat);
-    const botJid = conn.user.jid;
+    
+    const botNumber = conn.user.jid.split('@')[0]; // solo número
+    let botParticipant = participants.find(p => {
+        return p.id.includes(botNumber) || botNumber.includes(p.id.split('@')[0])
+    });
 
-    // Buscar el ID exacto del bot dentro del grupo
-    const botParticipant = participants.find(p => p.id === botJid || p.id.includes(botJid.split('@')[0]));
-    console.log('🧠 BotJID:', botJid)
-    console.log('🧠 Detectado como:', botParticipant)
+    console.log('🔎 BotNumber:', botNumber)
+    console.log('🔎 Detectado como:', botParticipant?.id || 'NO DETECTADO')
 
     const isBotAdmin = botParticipant?.admin === 'admin' || botParticipant?.admin === 'superadmin';
     if (!isBotAdmin) return m.reply('🧃 No soy admin, no puedo expulsar a nadie.');
 
-    // Verificar si el usuario que usa el comando es admin
+    // Verificar si el que ejecuta es admin
     const userParticipant = participants.find(p => p.id === m.sender);
     const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin';
     if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
-    // Obtener el user a expulsar
+    // Obtener usuario a expulsar
     let user;
     if (m.mentionedJid[0]) {
         user = m.mentionedJid[0];
@@ -28,13 +30,13 @@ var handler = async (m, { conn, participants, args }) => {
         if (!number) return m.reply('⚠️ Número inválido.');
         user = number + '@s.whatsapp.net';
     } else {
-        return m.reply('🚫 Mencioná, respondé o escribí el número a expulsar.');
+        return m.reply('🚫 Mencioná, respondé o escribí un número para expulsar.');
     }
 
     const ownerGroup = groupMetadata.owner || m.chat.split`-`[0] + '@s.whatsapp.net';
     const ownerBot = global.owner[0][0] + '@s.whatsapp.net';
 
-    if (user === botJid) return m.reply(`😹 No me puedo sacar a mí mismo`);
+    if (user === conn.user.jid) return m.reply(`😹 No me puedo sacar a mí mismo`);
     if (user === ownerGroup) return m.reply(`👑 Ese es el dueño del grupo`);
     if (user === ownerBot) return m.reply(`💥 Ese es el dueño del bot`);
 
