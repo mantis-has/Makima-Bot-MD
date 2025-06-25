@@ -30,8 +30,8 @@ const handler = async (m, { conn, args, command, usedPrefix }) => {
 `;
 
   const info = `
-💌 Mensaje: ${mensaje}
-👥 Miembros: ${total}
+> 💌 Mensaje: ${mensaje}
+> 👥 Miembros: ${total}
 ${decoEmoji1.repeat(1)}
 `;
 
@@ -42,8 +42,7 @@ ${decoEmoji1.repeat(1)}
 
   const footer = `
 ${decoEmoji1.repeat(1)}
-┊ 💜 Bot: ${global.botname || 'Bot'}
-┊ 📅 Comando: ${usedPrefix}${command}
+┊ *📅 Comando:* ${usedPrefix}${command}
 ╰──────────────────────╯
 `;
 
