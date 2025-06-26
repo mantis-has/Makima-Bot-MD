@@ -1,6 +1,8 @@
 import fetch from "node-fetch"
 import yts from "yt-search"
 
+const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
+
 const limit = 100 // MB
 
 // 📣
@@ -62,7 +64,7 @@ const handler = async (m, { conn, text, command }) => {
 
     if (["play", "playaudio", "ytmp3"].includes(command)) {
       await downloadAudio(conn, m, video, title)
-    } else if (["play2", "playvid", "ytv", "ytmp4"].includes(command)) {
+    } else if (["play2", "mp4", "ytv", "ytmp4"].includes(command)) {
       await downloadVideo(conn, m, video, title)
     }
 
@@ -155,7 +157,7 @@ const downloadVideo = async (conn, m, video, title) => {
   }
 }
 
-handler.command = handler.help = ['play', 'playaudio', 'ytmp3']
+handler.command = handler.help = ['play', 'playaudio', 'ytmp3', 'play2', 'mp4']
 handler.tags = ['downloader']
 
 export default handler
