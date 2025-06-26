@@ -1,13 +1,27 @@
 import fetch from 'node-fetch'
 
-const linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i
-const linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i
+let linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i
+let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i
 const defaultImage = 'https://qu.ax/eOCUt.jpg'
 
+// helper: verificar si el usuario es admin o owner
+async function isAdminOrOwner(m, conn) {
+  try {
+    const groupMetadata = await conn.groupMetadata(m.chat)
+    const sender = m.sender || m.participant || m.key?.participant
+    const participant = groupMetadata.participants.find(p => p.id === sender)
+    return participant?.admin || m.fromMe
+  } catch {
+    return false
+  }
+}
+
+// 🔧 handler principal
 const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   if (!m.isGroup) return m.reply('🔒 Solo funciona en grupos.')
 
-  const chat = global.db.data.chats[m.chat] ??= {}
+  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
+  const chat = global.db.data.chats[m.chat]
   const type = (args[0] || '').toLowerCase()
   const enable = command === 'on'
 
@@ -15,7 +29,7 @@ const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
     return m.reply(`✳️ Usa:\n*.on antilink* / *.off antilink*\n*.on welcome* / *.off welcome*\n*.on antiarabe* / *.off antiarabe*`)
   }
 
-  if (!(isAdmin || isOwner)) return m.reply('❌ Solo admins pueden cambiar la configuración.')
+  if (!(isAdmin || isOwner)) return m.reply('❌ Solo admins pueden activar o desactivar funciones.')
 
   if (type === 'antilink') {
     chat.antilink = enable
@@ -38,23 +52,24 @@ handler.group = true
 handler.tags = ['group']
 handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink', 'on antiarabe', 'off antiarabe']
 
+// 🔥 lógica antes de cada mensaje
 handler.before = async (m, { conn }) => {
   if (!m.isGroup) return
   const chat = global.db.data.chats[m.chat] ??= {}
 
-  // Antiarabe (cuando entra alguien)
+  // 🧨 Antiarabe
   if (chat.antiarabe && m.messageStubType === 27) {
     const newJid = m.messageStubParameters?.[0]
-    if (/^\+?(212|91|92|98|20|234|60|62|971)/.test(newJid)) {
+    if (/^(\+212|\+91|\+92|\+98|\+20|\+234|\+60|\+62|\+971)/.test(newJid)) {
       await conn.sendMessage(m.chat, {
-        text: `⚠️ Número sospechoso detectado: ${newJid}\nSerá eliminado del grupo.`
+        text: `Mm ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
       })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
-      return
+      return true
     }
   }
 
-  // Antilink
+  // 💥 Antilink
   if (chat.antilink) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const isUserAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
@@ -62,29 +77,42 @@ handler.before = async (m, { conn }) => {
     const text = m?.text || ''
     if (!isUserAdmin && (linkRegex.test(text) || linkRegex1.test(text))) {
       const userTag = `@${m.sender.split('@')[0]}`
+      const delet = m.key.participant
+      const msgID = m.key.id
 
       try {
         const ownGroupLink = `https://chat.whatsapp.com/${await conn.groupInviteCode(m.chat)}`
         if (text.includes(ownGroupLink)) return
       } catch {}
 
-      await conn.sendMessage(m.chat, {
-        text: `🚫 ${userTag}, los enlaces no están permitidos aquí.`,
-        mentions: [m.sender]
-      }, { quoted: m })
-
-      await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove').catch(() => {
-        conn.sendMessage(m.chat, {
-          text: `⚠️ No pude expulsar a ${userTag}. Verifica si tengo permisos.`,
+      try {
+        await conn.sendMessage(m.chat, {
+          text: `🚫 Hey ${userTag}, los enlaces no están permitidos acá.`,
           mentions: [m.sender]
         }, { quoted: m })
-      })
-      return
+
+        await conn.sendMessage(m.chat, {
+          delete: {
+            remoteJid: m.chat,
+            fromMe: false,
+            id: msgID,
+            participant: delet
+          }
+        })
+
+        await conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
+      } catch {
+        await conn.sendMessage(m.chat, {
+          text: `⚠️ No pude eliminar ni expulsar a ${userTag}. Puede que no tenga permisos.`,
+          mentions: [m.sender]
+        }, { quoted: m })
+      }
+      return true
     }
   }
 
-  // Welcome & Bye
-  if (chat.welcome && [27, 28, 32].includes(m.messageStubType)) {
+  // 🌸 Welcome y Bye
+  if (chat.welcome && (m.messageStubType === 27 || m.messageStubType === 28 || m.messageStubType === 32)) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const groupSize = groupMetadata.participants.length
     const userId = m.messageStubParameters?.[0] || m.sender
@@ -98,21 +126,43 @@ handler.before = async (m, { conn }) => {
     }
 
     if (m.messageStubType === 27) {
-      const caption = `🌸 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳@ 🌸\n\n✿ *Bienvenid@* a *${groupMetadata.subject}* 🌺\n✰ ${userMention} ¡qué gusto verte por aquí!\n\n✦ Ahora somos *${groupSize}* miembros.\n🐾 Disfrutá y compartí lo que quieras.\n\n> Usa *#help* para ver los comandos 👾`
+      const txtWelcome = '🌸 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳@ 🌸'
+      const bienvenida = `
+✿ *Bienvenid@* a *${groupMetadata.subject}* 🌺
+
+✰ ${userMention} ¡qué gusto verte por aquí!
+
+✦ Ahora somos *${groupSize}* integrantes activos 🧑‍🤝‍🧑
+
+🐾 Disfruta y participa, este grupo es pa’ compartir y pasarla bien.
+
+> Usa *#help* para conocer todos los comandos disponibles 👾
+`.trim()
 
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
-        caption,
+        caption: `${txtWelcome}\n\n${bienvenida}`,
         contextInfo: { mentionedJid: [userId] }
       })
     }
 
     if (m.messageStubType === 28 || m.messageStubType === 32) {
-      const caption = `🌸 𝙰𝙳𝙸Ó𝚂 🌸\n\n✿ *${userMention}* salió del grupo *${groupMetadata.subject}* 🥀\n✦ Ahora somos *${groupSize}* miembros.\n💌 ¡Te esperamos pronto de vuelta!\n\n> Usa *#help* si quieres volver 🙌`
+      const txtBye = '🌸 𝙰𝙳𝙸Ó𝚂 🌸'
+      const despedida = `
+✿ *Adiós* de *${groupMetadata.subject}* 🥀
+
+✰ ${userMention} esperamos verte pronto de nuevo ✨
+
+✦ Somos *${groupSize}* aún, cuidemos este espacio.
+
+💌 Que tengas un excelente día, nos vemos en otra ocasión.
+
+> Usa *#help* si necesitas algo o quieres volver 🙌
+`.trim()
 
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
-        caption,
+        caption: `${txtBye}\n\n${despedida}`,
         contextInfo: { mentionedJid: [userId] }
       })
     }
