@@ -16,8 +16,8 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   m.reply('✧ La sugerencia se envió a mi propietario.')
 }
 
-handler.help = ['newcommand']
+handler.help = ['sugerir < cosas pa la botsita >']
 handler.tags = ['info']
-handler.command = ['newcommand', 'sug']
+handler.command = ['sugerir', 'sug']
 
 export default handler
