@@ -53,7 +53,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     let nombreBot = global.namebot || 'Bot'
     let bannerFinal = './storage/img/menu.jpg'
 
-    // 👇 Detecta sub bot y lee config.json si existe
+    // 👇 Aca se Lee si el sub bot tiene personalización 
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const configPath = join('./JadiBots', botActual, 'config.json')
     if (fs.existsSync(configPath)) {
