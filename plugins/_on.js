@@ -4,7 +4,7 @@ let linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i
 let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i
 const defaultImage = 'https://qu.ax/eOCUt.jpg'
 
-// helper: verificar si el usuario es admin o owner
+// helper para checar si es admin o owner
 async function isAdminOrOwner(m, conn) {
   try {
     const groupMetadata = await conn.groupMetadata(m.chat)
@@ -57,18 +57,24 @@ handler.before = async (m, { conn }) => {
   if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
   const chat = global.db.data.chats[m.chat]
 
-  // Antiárabe revisa cuando alguien entra (stubType 27)
+  // Log general
+  console.log(`Mensaje en grupo ${m.chat} tipo: ${m.messageStubType} de: ${m.sender}`)
+
+  // Antiárabe solo para entradas (stubType 27)
   if (chat.antiarabe && m.messageStubType === 27) {
     const newJid = m.messageStubParameters?.[0]
-    if (!newJid) return
+    console.log('Nuevo participante detectado:', newJid)
+    if (!newJid) {
+      console.log('No se encontró nuevo participante en messageStubParameters')
+      return
+    }
 
-    // Extraer número limpio
+    // Limpia el número quitando todo menos dígitos
     const number = newJid.split('@')[0].replace(/\D/g, '')
+    console.log(`Número limpio: ${number}`)
 
-    console.log(`Nuevo miembro entró: ${newJid} - número limpio: ${number}`)
-
-    // Prefijos sospechosos
-    const arabicPrefixes = ['212', '20', '971', '965', '966', '974', '973', '962'] // Marruecos, Egipto, Emiratos, Kuwait, Arabia Saudita, Qatar, Bahrain, Jordania
+    // Lista prefijos que quieres bloquear (puedes agregar más)
+    const arabicPrefixes = ['212', '20', '971', '965', '966', '974', '973', '962']
 
     const isArab = arabicPrefixes.some(prefix => number.startsWith(prefix))
 
@@ -82,7 +88,7 @@ handler.before = async (m, { conn }) => {
     }
   }
 
-  // Resto de lógica: antilink, welcome, etc.
+  // Antilink
   if (chat.antilink) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const isUserAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
@@ -124,6 +130,7 @@ handler.before = async (m, { conn }) => {
     }
   }
 
+  // Welcome y Bye
   if (chat.welcome && (m.messageStubType === 27 || m.messageStubType === 28 || m.messageStubType === 32)) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const groupSize = groupMetadata.participants.length
