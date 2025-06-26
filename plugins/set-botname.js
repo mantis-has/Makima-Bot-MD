@@ -62,7 +62,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.command = /^setbotname$/i
 handler.tags = ['owner']
-handler.rowner = true 
+handler.rowner = false
 handler.limit = false 
 
 export default handler
