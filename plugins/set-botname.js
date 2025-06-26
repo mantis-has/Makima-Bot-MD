@@ -1,60 +1,41 @@
-// setbotname-subbot.js
 import fs from 'fs'
 import path from 'path'
-import chalk from 'chalk'
 
 const handler = async (m, { conn, text, usedPrefix, command }) => {
-  const newName = text.trim()
+  if (!text) return m.reply(`👀 Usa así: *${usedPrefix + command} nombre nuevo*`)
 
-  if (!newName) {
-    return m.reply(`*¡Ingresa el nuevo nombre del sub-bot!*\n\nEjemplo:\n${usedPrefix + command} YuruBot`)
+  const senderNumber = m.sender.replace(/[^0-9]/g, '')
+  const botPath = path.join('./JadiBots', senderNumber)
+  const configPath = path.join(botPath, 'config.json')
+
+  if (!fs.existsSync(botPath)) {
+    return m.reply('❌ No encontré tu sub bot activo.')
   }
 
-  // ✦ OBTENER NÚMERO DEL SUB-BOT QUE EJECUTA EL COMANDO
-  const botJid = conn?.user?.id || conn?.auth?.creds?.me?.id?.split(':')[0]
-  if (!botJid) return m.reply('❌ No se pudo identificar el número del sub-bot.')
-
-  const botNumber = botJid.split('@')[0] // quita el @s.whatsapp.net
-
-  // 📁 RUTA: ./JadiBots/NUMERO/config.json
-  const currentDir = path.dirname(new URL(import.meta.url).pathname)
-  const jadiBotsDir = path.join(currentDir, '..', '..', 'JadiBots')
-  const subBotDir = path.join(jadiBotsDir, botNumber)
-  const configPath = path.join(subBotDir, 'config.json')
-
-  console.log(chalk.yellow(`[DEBUG] Ruta del config.json: ${configPath}`))
-
-  // 📂 Verifica existencia de carpeta
-  if (!fs.existsSync(subBotDir)) {
-    return m.reply(`❌ No se encontró la carpeta del sub-bot: *${botNumber}*`)
-  }
-
-  // 📄 Lee o crea el archivo config.json
   let config = {}
+
+  // Si existe config.json, leerlo
   if (fs.existsSync(configPath)) {
     try {
-      config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+      config = JSON.parse(fs.readFileSync(configPath))
     } catch (e) {
-      console.error(chalk.red(`❌ Error leyendo config.json de ${botNumber}`), e)
-      return m.reply('❌ El archivo de configuración está dañado o no se pudo leer.')
+      return m.reply('⚠️ Error al leer el config.json.')
     }
   }
 
-  config.namebot = newName
+  // Editar o crear el campo "name"
+  config.name = text.trim()
 
   try {
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8')
-    m.reply(`✅ Sub-Bot *${botNumber}* ahora se llama: *${newName}*`)
-    console.log(chalk.green(`✅ Nombre actualizado para ${botNumber}: ${newName}`))
-  } catch (e) {
-    console.error(chalk.red(`❌ Error guardando el nombre del Sub-Bot ${botNumber}`), e)
-    m.reply('❌ No se pudo guardar el nuevo nombre.')
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
+    m.reply(`✅ Nombre del sub bot cambiado a: *${text.trim()}*`)
+  } catch (err) {
+    console.error(err)
+    m.reply('❌ Ocurrió un error al guardar el nombre.')
   }
 }
 
 handler.command = /^setbotname$/i
-handler.tags = ['owner']
-handler.rowner = false
-handler.limit = false
+handler.owner = false // solo el dueño puede usar esto
 
 export default handler
