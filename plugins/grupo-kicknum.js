@@ -1,61 +1,52 @@
-const handler = async (m, { conn, args, usedPrefix, command }) => {
-  if (!m.isGroup) return m.reply('🔒 Este comando solo funciona en grupos.')
-  if (!args[0]) return m.reply(`🔎 Ingresa un prefijo. Ej: ${usedPrefix + command} 504`)
-  const prefix = args[0].replace(/[^\d]/g, '')
-  if (!prefix) return m.reply('⚠️ Prefijo inválido.')
+const handler = async (m, { conn, args, groupMetadata }) => {
+  if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
-  await m.reply(`🔍 Analizando miembros del grupo para prefijo +${prefix}...`)
+  if (!args[0]) return m.reply('📌 Ingresa un prefijo. Ejemplo: *.kicknum 504*');
+  if (isNaN(args[0])) return m.reply('🔢 Prefijo inválido, debe ser número.');
 
-  const groupMetadata = await conn.groupMetadata(m.chat)
-  const participants = groupMetadata.participants.map(p => p.id)
-  const toKick = []
+  const prefijo = args[0].replace(/[+]/g, '');
+  const participantes = groupMetadata?.participants || [];
 
-  for (const id of participants) {
-    if (id === conn.user.jid) continue // no se patea el bot
+  let usersToKick = [];
 
-    if (id.endsWith('@lid')) {
+  console.log(`🔍 Analizando miembros del grupo para prefijo +${prefijo}...`);
+
+  for (const p of participantes) {
+    let jid = p.id;
+    // Soporte @lid, @s.whatsapp.net o @g.us
+    if (jid.endsWith('@lid')) {
       try {
-        console.log(`🔁 Intentando resolver ${id}`)
-        const resolved = await conn.onWhatsApp(id)
-        if (resolved && resolved.length && resolved[0].jid) {
-          const realJid = resolved[0].jid
-          const realNumber = realJid.split('@')[0]
-          console.log(`✅ Coincide lid: ${id} => ${realNumber}`)
-          if (realNumber.startsWith(prefix)) {
-            toKick.push(realJid)
-          }
-        } else {
-          console.log(`❌ No se pudo resolver jid de ${id}`)
-        }
-      } catch (e) {
-        console.log(`⚠️ Error al resolver ${id}:`, e)
+        const resolvedJid = await conn.decodeJid(jid);
+        console.log(`Se pudo resolver jid de ${jid} a ${resolvedJid}`);
+        jid = resolvedJid;
+      } catch {
+        console.log(`No se pudo resolver jid de ${jid}`);
       }
-    } else {
-      const number = id.split('@')[0]
-      if (number.startsWith(prefix)) {
-        toKick.push(id)
-      }
+    }
+
+    if (jid.startsWith(prefijo) || jid.includes(`@${prefijo}`)) {
+      usersToKick.push(jid);
     }
   }
 
-  if (!toKick.length) return m.reply(`🤷‍♂️ No hay nadie con el prefijo +${prefix} (o están ocultos)`)
+  if (usersToKick.length === 0) {
+    return m.reply(`❌ No encontré usuarios con el prefijo +${prefijo} en este grupo.`);
+  }
 
-  await m.reply(`👢 Expulsando a ${toKick.length} usuario(s) con prefijo +${prefix}...`)
+  await m.reply(`⚠️ Iniciando expulsión de ${usersToKick.length} usuarios con prefijo +${prefijo}...`);
 
-  for (const jid of toKick) {
+  for (const user of usersToKick) {
     try {
-      await conn.groupParticipantsUpdate(m.chat, [jid], 'remove')
-      await new Promise(res => setTimeout(res, 3000)) // delay entre kicks
+      await conn.groupParticipantsUpdate(m.chat, [user], 'remove');
+      console.log(`✅ Usuario expulsado: ${user}`);
     } catch (e) {
-      console.log(`⚠️ No se pudo expulsar a ${jid}`, e)
-      await m.reply(`❌ No pude expulsar a @${jid.split('@')[0]}. Puede que no tenga permisos.`, null, {
-        mentions: [jid]
-      })
+      console.log(`❌ No pude expulsar a ${user}. Puede que no tenga permisos.`);
+      await m.reply(`⚠️ No pude expulsar a ${user}. Puede que el bot no sea admin.`);
     }
   }
 }
 
-handler.command = ['kicknum']
-handler.group = true
+handler.command = ['kicknum'];
+handler.group = true;
 
-export default handler
+export default handler;
