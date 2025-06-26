@@ -1,11 +1,11 @@
 import fetch from 'node-fetch'
 
-let handler = async (m, { conn, command, args }) => {
+let handler = async (m, { conn, args }) => {
   if (!args[0]) return conn.reply(m.chat, `☁︎ Por favor, ingrese el Link de una página.`, m)
 
   try {
-    await m.react('📍') // esperando
-    conn.reply(m.chat, `⚔️ Procesando su solicitud...`, m)
+    await m.react('⏳')
+    conn.reply(m.chat, `🧠 Procesando su solicitud...`, m)
 
     let url = `https://image.thum.io/get/fullpage/${args[0]}`
     let res = await fetch(url, {
@@ -14,18 +14,21 @@ let handler = async (m, { conn, command, args }) => {
       }
     })
 
-    if (!res.ok) throw new Error('No se pudo capturar la página')
+    let contentType = res.headers.get('content-type') || ''
+    if (!res.ok || !contentType.startsWith('image/')) {
+      throw new Error('No se recibió una imagen válida.')
+    }
 
     let ss = await res.buffer()
 
-    await m.react('📸') // captura lista
+    await m.react('📸')
     await conn.sendFile(m.chat, ss, 'captura.png', `✅ Captura de:\n${args[0]}`, m)
+    await m.react('✅')
 
-    await m.react('✅') // todo bien
   } catch (err) {
-    console.error(err)
+    console.error('[❌ ERROR EN SS]', err)
     await m.react('❌')
-    return conn.reply(m.chat, `⚠️ Ocurrió un error al capturar la página.\nAsegúrese de que el enlace sea válido y que la página sea pública.`, m)
+    conn.reply(m.chat, `⚠️ No se pudo capturar la página.\nAsegúrate de que el link sea válido y no requiera inicio de sesión.`, m)
   }
 }
 
