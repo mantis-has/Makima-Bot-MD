@@ -1,29 +1,30 @@
 import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
-import { useMultiFileAuthState, makeWASocket, Browsers, makeCacheableSignalKeyStore, jidNormalizedUser } from '@whiskeysockets/baileys'
-import Boom from '@hapi/boom'
-// Importa tu handler, asegurate que exporte la función que maneja mensajes
-import handler from '../handler.js' // Ajusta ruta
+import { makeWASocket, useMultiFileAuthState, makeCacheableSignalKeyStore, Browsers, jidNormalizedUser } from '@whiskeysockets/baileys'
+import { Boom } from '@hapi/boom'
+import handler from './handler.js' // ✅ Ruta ajustada
 
-const version = [2, 2306, 25] // Cambia si usas otra versión
+const version = [2, 2323, 4] // Cámbialo según tu versión de baileys
 const logger = console
 
 async function reconnectSubBot(botPath) {
   const botName = path.basename(botPath)
-  console.log(chalk.yellow(`Intentando reconectar sub-bot en: ${botName}`))
+  console.log(chalk.yellow(`🔁 Intentando reconectar sub-bot: ${botName}`))
+
   try {
-    const { state: subBotState, saveCreds: saveSubBotCreds } = await useMultiFileAuthState(botPath)
-    const subBotConn = makeWASocket({
+    const { state, saveCreds } = await useMultiFileAuthState(botPath)
+
+    const sock = makeWASocket({
       version,
       logger,
       printQRInTerminal: false,
-      auth: {
-        creds: subBotState.creds,
-        keys: makeCacheableSignalKeyStore(subBotState.keys, logger),
-      },
       browser: Browsers.ubuntu('Chrome'),
-      markOnlineOnclientect: false,
+      auth: {
+        creds: state.creds,
+        keys: makeCacheableSignalKeyStore(state.keys, logger),
+      },
+      markOnlineOnConnect: false,
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
       retryRequestDelayMs: 10,
@@ -32,81 +33,68 @@ async function reconnectSubBot(botPath) {
       appStateMacVerification: { patch: false, snapshot: false },
       getMessage: async (key) => {
         const jid = jidNormalizedUser(key.remoteJid)
-        if (subBotConn.store && subBotConn.store.loadMessage) {
-          const msg = await subBotConn.store.loadMessage(jid, key.id)
-          return msg?.message || ''
-        }
-        return ''
+        const msg = await sock?.store?.loadMessage?.(jid, key.id)
+        return msg?.message || ''
       },
     })
 
-    subBotConn.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+    sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
       if (connection === 'open') {
-        console.log(chalk.green(`Sub-bot conectado correctamente: ${botName}`))
+        console.log(chalk.green(`✅ Sub-bot conectado: ${botName}`))
       } else if (connection === 'close') {
         const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
-        console.error(chalk.red(`Sub-bot desconectado en ${botName}. Razón: ${reason}`))
+        console.error(chalk.red(`❌ Sub-bot desconectado: ${botName}. Razón: ${reason}`))
       }
     })
 
-    subBotConn.ev.on('creds.update', saveSubBotCreds)
+    sock.ev.on('creds.update', saveCreds)
 
-    if (handler && handler.handler) {
-      subBotConn.handler = handler.handler.bind(subBotConn)
-      subBotConn.ev.on('messages.upsert', subBotConn.handler)
-      console.log(chalk.blue(`Manejador asignado al sub-bot: ${botName}`))
-    } else {
-      console.warn(chalk.yellow(`Advertencia: No se encontró el manejador para asignar al sub-bot: ${botName}`))
+    if (handler?.handler) {
+      sock.handler = handler.handler.bind(sock)
+      sock.ev.on('messages.upsert', sock.handler)
+      console.log(chalk.blue(`📨 Handler asignado: ${botName}`))
     }
 
     if (!global.subBots) global.subBots = {}
-    global.subBots[botName] = subBotConn
+    global.subBots[botName] = sock
 
-    return botName
+    return true
   } catch (e) {
-    console.error(chalk.red(`Error al reconectar sub-bot en ${botName}:`), e)
-    throw e
+    console.error(chalk.red(`💥 Error reconectando sub-bot ${botName}:`), e)
+    return false
   }
 }
 
-async function reconnectAllSubBots(m) {
-  const jadiBotsPath = path.resolve('./JadiBots')
-  if (!fs.existsSync(jadiBotsPath)) {
-    return m.reply('❌ No encontré la carpeta ./JadiBots.')
-  }
+const plugin = async (m) => {
+  const jadiPath = path.resolve('./JadiBots')
+  if (!fs.existsSync(jadiPath)) return m.reply('❌ No encontré la carpeta *./JadiBots*.')
 
-  const subBots = fs.readdirSync(jadiBotsPath).filter(f => {
-    const fullPath = path.join(jadiBotsPath, f)
-    return fs.lstatSync(fullPath).isDirectory()
+  const subBots = fs.readdirSync(jadiPath).filter(folder => {
+    const full = path.join(jadiPath, folder)
+    return fs.lstatSync(full).isDirectory()
   })
 
-  if (!subBots.length) return m.reply('❌ No hay sub bots para reconectar.')
+  if (!subBots.length) return m.reply('⚠️ No hay sub bots en *./JadiBots*.')
 
-  let conectados = []
-  let fallidos = []
+  let ok = [], fail = []
+  await m.reply(`🔁 Reconectando *${subBots.length}* sub bots...`)
 
-  await m.reply(`🔄 Empezando a reconectar ${subBots.length} sub bots...`)
-
-  for (const sub of subBots) {
-    const subPath = path.join(jadiBotsPath, sub)
-    try {
-      await reconnectSubBot(subPath)
-      conectados.push(sub)
-    } catch {
-      fallidos.push(sub)
-    }
+  for (const folder of subBots) {
+    const fullPath = path.join(jadiPath, folder)
+    const success = await reconnectSubBot(fullPath)
+    if (success) ok.push(folder)
+    else fail.push(folder)
   }
 
-  let texto = '📊 Resultado de reconexión de sub bots:\n\n'
-  texto += `✅ Conectados (${conectados.length}):\n${conectados.length ? conectados.join('\n') : 'Ninguno'}\n\n`
-  texto += `❌ Fallidos (${fallidos.length}):\n${fallidos.length ? fallidos.join('\n') : 'Ninguno'}`
+  let msg = '📊 *Resultado de reconexión:*\n\n'
+  msg += `✅ Conectados (${ok.length}):\n${ok.join('\n') || 'Ninguno'}\n\n`
+  msg += `❌ Fallidos (${fail.length}):\n${fail.join('\n') || 'Ninguno'}`
 
-  await m.reply(texto)
+  await m.reply(msg)
 }
 
-export default {
-  name: 'reconectarsubs',
-  description: 'Reconecta todos los sub bots desde JadiBots',
-  command: ['reconectar', 'recsubs', 'recsub'],
-  run: reconnectAllSubBots
-}
+plugin.help = ['reconectar', 'recsubs']
+plugin.tags = ['owner']
+plugin.command = ['reconectar', 'recsubs', 'recsub']
+
+export default plugin
