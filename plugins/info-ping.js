@@ -11,9 +11,9 @@ const handler = async (m, { conn }) => {
   })
 }
 
-handler.command = ['ping', 'latencia']
+handler.command = ['ping', 'p']
 handler.tags = ['info']
-handler.help = ['ping']
+handler.help = ['p']
 handler.register = false
 
 export default handler
