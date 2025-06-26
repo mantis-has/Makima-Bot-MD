@@ -10,6 +10,7 @@ const tags = {
   group: '❀ Group',
   search: '❀ Searchs',
   sticker: '❀ Stickers',
+  ia: '❀ Inteligencia Artificial',
 }
 
 const defaultMenu = {
