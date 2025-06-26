@@ -4,7 +4,7 @@ import chalk from 'chalk'
 import { useMultiFileAuthState, makeWASocket, Browsers, makeCacheableSignalKeyStore, jidNormalizedUser } from '@whiskeysockets/baileys'
 import Boom from '@hapi/boom'
 // Importa tu handler, asegurate que exporte la función que maneja mensajes
-import handler from '../path/to/handler.js' // Ajusta ruta
+import handler from '../handler.js' // Ajusta ruta
 
 const version = [2, 2306, 25] // Cambia si usas otra versión
 const logger = console
