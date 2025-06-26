@@ -3,7 +3,7 @@ import path from 'path'
 import chalk from 'chalk'
 import { makeWASocket, useMultiFileAuthState, makeCacheableSignalKeyStore, Browsers, jidNormalizedUser } from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
-import handler from './handler.js' // ✅ Ruta ajustada
+import handler from '../../handler.js' // ✅ Ruta ajustada
 
 const version = [2, 2323, 4] // Cámbialo según tu versión de baileys
 const logger = console
