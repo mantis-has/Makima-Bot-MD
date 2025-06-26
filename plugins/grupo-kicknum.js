@@ -1,44 +1,55 @@
-const handler = async (m, { conn, groupMetadata }) => {
-  if (!m.isGroup) return m.reply('🔒 Este comando solo es para grupos.');
+const handler = async (m, { conn, args, command }) => {
+  if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
-  const arabicPrefixes = ['212', '20', '971', '92', '98', '234', '60', '62', '91']; // +212 (Marruecos), +20 (Egipto), +971 (EAU), +92 (Pakistán), +98 (Irán), +234 (Nigeria), +60 (Malasia), +62 (Indonesia), +91 (India)
+  const groupMetadata = await conn.groupMetadata(m.chat);
+  
+  // Validar que quien manda el comando es admin
+  const userParticipant = groupMetadata.participants.find(p => p.id === m.sender);
+  const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin' || m.sender === groupMetadata.owner;
+  if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
-  const participants = groupMetadata.participants || [];
+  const prefijosArabes = ['212', '971', '20', '234', '60', '62', '92', '98', '91']; // +212, +971, etc
+  const arabesParaKickear = [];
 
-  const usersToKick = [];
+  // Buscar participantes con prefijo árabe, incluyendo soporte para @lid y @s.whatsapp.net
+  for (const participante of groupMetadata.participants) {
+    let id = participante.id;
 
-  console.log(`🔎 Revisando miembros para prefijos árabes...`);
+    // En caso de @lid, tratar de resolver el número base (quitando @lid)
+    // A veces viene con @lid, a veces no, solo toma la parte del número
+    let numero = id.split('@')[0];
 
-  for (const p of participants) {
-    let jid = p.id; // puede ser tipo 123456789@lid o 504123456789@s.whatsapp.net
-    let number = jid.split('@')[0].replace(/\D/g, ''); // quitar cualquier no número
+    // Quitar cualquier prefijo tipo + o caracteres extra (por si acaso)
+    numero = numero.replace(/\D/g, '');
 
-    // Revisar si número empieza con alguno de los prefijos árabes
-    if (arabicPrefixes.some(prefix => number.startsWith(prefix))) {
-      let realJid = number + '@s.whatsapp.net';
-      usersToKick.push(realJid);
-      console.log(`⚠️ Usuario con prefijo árabe detectado: ${jid} (normalizado a ${realJid})`);
+    // Validar si el número empieza con alguno de los prefijos árabes
+    if (prefijosArabes.some(pref => numero.startsWith(pref))) {
+      arabesParaKickear.push(participante.id);
     }
   }
 
-  if (usersToKick.length === 0) {
-    return m.reply('✅ No hay usuarios con prefijos árabes en este grupo.');
+  if (arabesParaKickear.length === 0) {
+    return m.reply('😌 No se encontraron usuarios con prefijo árabe en el grupo.');
   }
 
-  await m.reply(`⚠️ Expulsando a ${usersToKick.length} usuarios con prefijos árabes...`);
+  console.log(`🔎 Usuarios con prefijo árabe para kickear (${arabesParaKickear.length}):`);
+  arabesParaKickear.forEach(u => console.log(`- ${u}`));
 
-  for (const user of usersToKick) {
+  await m.reply(`⚠️ Se expulsará a ${arabesParaKickear.length} usuario(s) con prefijo árabe.`);
+
+  for (const jid of arabesParaKickear) {
     try {
-      await conn.groupParticipantsUpdate(m.chat, [user], 'remove');
-      console.log(`✅ Expulsado: ${user}`);
-    } catch (error) {
-      console.log(`❌ Error expulsando a ${user}:`, error);
-      await m.reply(`⚠️ No pude expulsar a @${user.split('@')[0]}. Puede que no tenga permisos o no sea admin.`, null, { mentions: [user] });
+      await conn.groupParticipantsUpdate(m.chat, [jid], 'remove');
+      console.log(`✅ Expulsado: ${jid}`);
+    } catch {
+      m.reply(`❌ No pude expulsar a @${jid.split('@')[0]}. Puede que no tenga permisos de admin.`, null, { mentions: [jid] });
+      console.log(`❌ Error expulsando a: ${jid} - posible falta de permisos.`);
     }
   }
 };
 
-handler.command = ['kickarab', 'kickarabe', 'kickarabes'];
+handler.command = ['kickarab', 'kickarabes'];
 handler.group = true;
+handler.admin = true;
 
 export default handler;
