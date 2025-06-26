@@ -52,7 +52,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.command = /^setbotname$/i
 handler.tags = ['owner'] // Puedes ajustar los tags o categorías si tienes un sistema de ayuda
-handler.rowner = true // Solo el owner principal o los dueños de los sub-bots deberían poder usarlo. Ajusta según tu framework.
+handler.rowner = false // Solo el owner principal o los dueños de los sub-bots deberían poder usarlo. Ajusta según tu framework.
 handler.limit = false // No consume límites, es un ajuste de configuración
 
 export default handler
