@@ -1,100 +1,90 @@
-import fs from 'fs'
-import path from 'path'
-import chalk from 'chalk'
-import { makeWASocket, useMultiFileAuthState, makeCacheableSignalKeyStore, Browsers, jidNormalizedUser } from '@whiskeysockets/baileys'
-import { Boom } from '@hapi/boom'
-import handler from '../../handler.js' // ✅ Ruta ajustada
+import fetch from 'node-fetch';
 
-const version = [2, 2323, 4] // Cámbialo según tu versión de baileys
-const logger = console
+const handler = async (m, { conn, text, usedPrefix, command }) => {
+  if (!text) {
+    return m.reply(
+      `🌸 Ingresa el enlace de un video de TikTok.
 
-async function reconnectSubBot(botPath) {
-  const botName = path.basename(botPath)
-  console.log(chalk.yellow(`🔁 Intentando reconectar sub-bot: ${botName}`))
+📌 *Ejemplo:*
+${usedPrefix + command} https://vm.tiktok.com/xxxxxx`, 
+      global.rcanal
+    );
+  }
 
   try {
-    const { state, saveCreds } = await useMultiFileAuthState(botPath)
+    await m.react('🎴');
 
-    const sock = makeWASocket({
-      version,
-      logger,
-      printQRInTerminal: false,
-      browser: Browsers.ubuntu('Chrome'),
-      auth: {
-        creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, logger),
-      },
-      markOnlineOnConnect: false,
-      generateHighQualityLinkPreview: true,
-      syncFullHistory: true,
-      retryRequestDelayMs: 10,
-      transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 10 },
-      maxMsgRetryCount: 15,
-      appStateMacVerification: { patch: false, snapshot: false },
-      getMessage: async (key) => {
-        const jid = jidNormalizedUser(key.remoteJid)
-        const msg = await sock?.store?.loadMessage?.(jid, key.id)
-        return msg?.message || ''
-      },
-    })
+    const api = `https://theadonix-api.vercel.app/api/tiktok?url=${encodeURIComponent(text)}`;
+    const res = await fetch(api);
+    const json = await res.json();
 
-    sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
-      if (connection === 'open') {
-        console.log(chalk.green(`✅ Sub-bot conectado: ${botName}`))
-      } else if (connection === 'close') {
-        const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
-        console.error(chalk.red(`❌ Sub-bot desconectado: ${botName}. Razón: ${reason}`))
-      }
-    })
-
-    sock.ev.on('creds.update', saveCreds)
-
-    if (handler?.handler) {
-      sock.handler = handler.handler.bind(sock)
-      sock.ev.on('messages.upsert', sock.handler)
-      console.log(chalk.blue(`📨 Handler asignado: ${botName}`))
+    const result = json?.result;
+    if (!result?.video) {
+      await m.react('❌');
+      return m.reply('❌ No se pudo obtener el video.', global.rcanal);
     }
 
-    if (!global.subBots) global.subBots = {}
-    global.subBots[botName] = sock
+    const {
+      title,
+      author,
+      thumbnail,
+      duration,
+      video,
+      audio,
+      likes,
+      comments,
+      shares,
+      views,
+    } = result;
 
-    return true
+    const caption = `
+*「📥 TikTok Downloader」*
+
+🍿 *Título:* ${title}
+🎨 *Autor:* ${author.name} (@${author.username})
+⏱️ *Duración:* ${duration}s
+
+👍 *Likes:* ${likes}
+💬 *Comentarios:* ${comments}
+🔁 *Compartidos:* ${shares}
+👁️ *Vistas:* ${views}
+
+☁️ *Fuente:* Adonix API`.trim();
+
+    // Enviar miniatura con detalles
+    await conn.sendMessage(
+      m.chat,
+      {
+        image: { url: thumbnail },
+        caption,
+        contextInfo: global.rcanal
+      },
+      { quoted: m }
+    );
+
+    // Enviar video
+    await conn.sendMessage(
+      m.chat,
+      {
+        video: { url: video },
+        mimetype: 'video/mp4',
+        fileName: `${author.username}.mp4`,
+        contextInfo: global.rcanal
+      },
+      { quoted: m }
+    );
+
+    await m.react('✅');
+
   } catch (e) {
-    console.error(chalk.red(`💥 Error reconectando sub-bot ${botName}:`), e)
-    return false
+    console.error(e);
+    await m.react('⚠️');
+    return m.reply('❌ Error al procesar el enlace.', global.rcanal);
   }
-}
+};
 
-const plugin = async (m) => {
-  const jadiPath = path.resolve('./JadiBots')
-  if (!fs.existsSync(jadiPath)) return m.reply('❌ No encontré la carpeta *./JadiBots*.')
+handler.help = ['tiktok <enlace>'];
+handler.tags = ['downloader'];
+handler.command = ['ttdl', 'tt', 'tiktok'];
 
-  const subBots = fs.readdirSync(jadiPath).filter(folder => {
-    const full = path.join(jadiPath, folder)
-    return fs.lstatSync(full).isDirectory()
-  })
-
-  if (!subBots.length) return m.reply('⚠️ No hay sub bots en *./JadiBots*.')
-
-  let ok = [], fail = []
-  await m.reply(`🔁 Reconectando *${subBots.length}* sub bots...`)
-
-  for (const folder of subBots) {
-    const fullPath = path.join(jadiPath, folder)
-    const success = await reconnectSubBot(fullPath)
-    if (success) ok.push(folder)
-    else fail.push(folder)
-  }
-
-  let msg = '📊 *Resultado de reconexión:*\n\n'
-  msg += `✅ Conectados (${ok.length}):\n${ok.join('\n') || 'Ninguno'}\n\n`
-  msg += `❌ Fallidos (${fail.length}):\n${fail.join('\n') || 'Ninguno'}`
-
-  await m.reply(msg)
-}
-
-plugin.help = ['reconectar', 'recsubs']
-plugin.tags = ['owner']
-plugin.command = ['reconectar', 'recsubs', 'recsub']
-
-export default plugin
+export default handler;
