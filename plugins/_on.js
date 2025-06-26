@@ -57,28 +57,32 @@ handler.before = async (m, { conn }) => {
   if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
   const chat = global.db.data.chats[m.chat]
 
-  // antiarabe
+  // Antiárabe revisa cuando alguien entra (stubType 27)
   if (chat.antiarabe && m.messageStubType === 27) {
     const newJid = m.messageStubParameters?.[0]
     if (!newJid) return
 
-    // sacar solo el número limpio sin sufijos raros
+    // Extraer número limpio
     const number = newJid.split('@')[0].replace(/\D/g, '')
 
-    console.log('AntiArabe raw jid:', newJid)
-    console.log('AntiArabe número extraído:', number)
+    console.log(`Nuevo miembro entró: ${newJid} - número limpio: ${number}`)
 
-    // checar prefijos +212 y otros que quieras
-    if (/^(212|91|92|98|20|234|60|62|971)/.test(number)) {
-      await conn.sendMessage(m.chat, {
-        text: `Mm ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
-      })
+    // Prefijos sospechosos
+    const arabicPrefixes = ['212', '20', '971', '965', '966', '974', '973', '962'] // Marruecos, Egipto, Emiratos, Kuwait, Arabia Saudita, Qatar, Bahrain, Jordania
+
+    const isArab = arabicPrefixes.some(prefix => number.startsWith(prefix))
+
+    if (isArab) {
+      console.log(`Antiárabe activado - expulsando a: ${newJid}`)
+      await conn.sendMessage(m.chat, { text: `Mm ${newJid} será expulsado por número sospechoso (Antiárabe activado).` })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
       return true
+    } else {
+      console.log(`Antiárabe activado - usuario ${newJid} NO es sospechoso`)
     }
   }
 
-  // antilink
+  // Resto de lógica: antilink, welcome, etc.
   if (chat.antilink) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const isUserAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
@@ -120,7 +124,6 @@ handler.before = async (m, { conn }) => {
     }
   }
 
-  // welcome / bye
   if (chat.welcome && (m.messageStubType === 27 || m.messageStubType === 28 || m.messageStubType === 32)) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const groupSize = groupMetadata.participants.length
