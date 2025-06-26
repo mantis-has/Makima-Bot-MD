@@ -1,5 +1,5 @@
 let handler = async (m, { conn, text, usedPrefix, command }) => {
-    if (!text) return conn.reply(m.chat, `√${emoji} Que comando quieres sugerir?`, m)
+    if (!text) return conn.reply(m.chat, `✦ Q comando o cosa quieres sugerir?`, m)
     if (text.length < 10) return conn.reply(m.chat, `✎ La sugerencia debe ser mas de 10 character.`, m)
     if (text.length > 1000) return conn.reply(m.chat, `❒ Maximo de la sugerencia es de 1000 character.`, m)
     const teks = `✏ Sugerencia de un nuevo comando del usuario *${nombre}*
