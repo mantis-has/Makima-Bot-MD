@@ -4,7 +4,6 @@ let linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i
 let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i
 const defaultImage = 'https://qu.ax/eOCUt.jpg'
 
-// helper para checar si es admin o owner
 async function isAdminOrOwner(m, conn) {
   try {
     const groupMetadata = await conn.groupMetadata(m.chat)
@@ -52,16 +51,21 @@ handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink', 'on 
 
 handler.before = async (m, { conn }) => {
   if (!m.isGroup) return
-  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
-  const chat = global.db.data.chats[m.chat]
+  const chat = global.db.data.chats[m.chat] ??= {}
 
   // ANTIARABE
   if (chat.antiarabe && m.messageStubType === 27) {
-    const newJid = m.messageStubParameters?.[0]
-    const number = newJid?.split('@')[0] || ''
+    let newJid = m.messageStubParameters?.[0]
+    if (!newJid) return
+
+    // Solo el número, sin @s.whatsapp.net
+    let number = newJid.split('@')[0]
+
+    console.log('AntiArabe check número entrante:', number)
+
     if (/^(212|91|92|98|20|234|60|62|971)/.test(number)) {
       await conn.sendMessage(m.chat, {
-        text: `🛑 ${number} fue expulsado por tener número sospechoso (Antiárabe activado).`
+        text: `🚫 El número +${number} fue expulsado por Antiárabe activado.`
       })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
       return true
