@@ -51,9 +51,19 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       premium: plugin.premium
     }))
 
+    // 👇 aquí empieza lo nuevo
     let nombreBot = global.namebot || 'Bot'
+    try {
+      const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
+      const configPath = join('./JadiBots', botActual, 'config.json')
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath))
+        if (config.name) nombreBot = config.name
+      }
+    } catch (e) {
+      console.log('⚠️ Error leyendo config.json del sub bot:', e)
+    }
 
-    // Verifica si es subbot o el principal
     const botPrincipal = '+50493059810'
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const esPrincipal = botActual === botPrincipal.replace(/\D/g, '')
