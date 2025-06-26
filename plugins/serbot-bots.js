@@ -18,14 +18,23 @@ let handler = async (m, { conn }) => {
   let formatUptime = clockString(uptime)
 
   let totalUsers = uniqueUsers.size
+
   let txt = `「 *Subs - Bots* 」`
   txt += `\n\n`
-  txt += `*◦Bot Principal →* 1\n`
-  txt += `*◦Nombre →* ${namebot}\n`
-  txt += `*◦Tiempo Conectada →* ${formatUptime}\n`
-  txt += `*◦ Subs Conectados →* ${totalUsers || 0}`
+  txt += `*◦ Bot Principal →* 1\n`
+  txt += `*◦ Nombre →* ${namebot}\n`
+  txt += `*◦ Tiempo Conectada →* ${formatUptime}\n`
+  txt += `*◦ Subs Conectados →* ${totalUsers || 0}\n`
 
-  await conn.reply(m.chat, txt, m, rcanal)
+  if (totalUsers > 0) {
+    txt += `\n*◦ Lista de Subs:*\n`
+    let i = 1
+    for (let jid of uniqueUsers.keys()) {
+      txt += `  ${i++}. wa.me/${jid.split('@')[0]}\n`
+    }
+  }
+
+  await conn.reply(m.chat, txt.trim(), m, rcanal)
 }
 
 handler.command = ['listjadibot', 'bots']
