@@ -2,26 +2,23 @@ const handler = async (m, { conn, args, groupMetadata }) => {
   if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
   if (!args[0]) return m.reply('📌 Ingresa un prefijo. Ejemplo: *.kicknum 504*');
-  if (isNaN(args[0])) return m.reply('🔢 Prefijo inválido, debe ser número.');
+  if (isNaN(args[0].replace('+', ''))) return m.reply('🔢 Prefijo inválido, debe ser número.');
 
-  const prefijo = args[0].replace(/[+]/g, '');
+  const prefijo = args[0].replace(/\D/g, ''); // solo números
   const participantes = groupMetadata?.participants || [];
-
-  let usersToKick = [];
 
   console.log(`🔍 Analizando miembros del grupo para prefijo +${prefijo}...`);
 
+  let usersToKick = [];
+
   for (const p of participantes) {
-    let jid = p.id; // ejemplo: 156981591593126@lid o 504123456789@s.whatsapp.net
-    let number = jid.split('@')[0]; // extrae solo el número
+    let jid = p.id; // puede ser tipo 123456789@lid o 504123456789@s.whatsapp.net
+    let number = jid.split('@')[0];
 
     if (number.startsWith(prefijo)) {
-      // Armar el jid real para expulsar
-      let realJid = number + '@s.whatsapp.net';
+      let realJid = number + '@s.whatsapp.net'; // siempre expulsar con este jid
       usersToKick.push(realJid);
-      console.log(`Usuario con prefijo encontrado: ${jid} -> expulsar ${realJid}`);
-    } else {
-      console.log(`Usuario sin prefijo: ${jid}`);
+      console.log(`Usuario encontrado: ${jid} -> expulsar con: ${realJid}`);
     }
   }
 
@@ -35,12 +32,12 @@ const handler = async (m, { conn, args, groupMetadata }) => {
     try {
       await conn.groupParticipantsUpdate(m.chat, [user], 'remove');
       console.log(`✅ Usuario expulsado: ${user}`);
-    } catch (e) {
-      console.log(`❌ No pude expulsar a ${user}. Puede que no tenga permisos.`);
-      await m.reply(`⚠️ No pude expulsar a @${user.split('@')[0]}. Puede que el bot no sea admin.`, null, { mentions: [user] });
+    } catch (error) {
+      console.log(`❌ Error expulsando a ${user}:`, error);
+      await m.reply(`⚠️ No pude expulsar a @${user.split('@')[0]}. Puede que el bot no tenga admin o permisos.`, null, { mentions: [user] });
     }
   }
-}
+};
 
 handler.command = ['kicknum'];
 handler.group = true;
