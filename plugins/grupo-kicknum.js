@@ -50,6 +50,6 @@ const handler = async (m, { conn, args, command }) => {
 
 handler.command = ['kickarab', 'kickarabes'];
 handler.group = true;
-handler.admin = true;
+
 
 export default handler;
