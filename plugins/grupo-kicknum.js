@@ -1,42 +1,30 @@
-import fetch from 'node-fetch';
-import FormData from 'form-data';
+import fetch from 'node-fetch'
 
-const handler = async (m, { conn, args }) => {
-  if (!args[0]) return m.reply('📎 Pasa el link del video de Instagram');
-
-  const url = args[0];
-  const form = new FormData();
-  form.append('q', url);
+const handler = async (m, { conn, text, args, usedPrefix, command }) => {
+  if (!text) return m.reply(`🚫 Ingresa el enlace de un post o reel de Instagram.\n\n📌 Ejemplo:\n${usedPrefix + command} https://www.instagram.com/reel/abc123/`)
 
   try {
-    await m.react("⏳");
+    m.react('⏳')
+    const res = await fetch(`https://api.dorratz.com/igdl?url=${encodeURIComponent(text)}`)
+    const json = await res.json()
 
-    const res = await fetch('https://saveig.app/api/ajaxSearch', {
-      method: 'POST',
-      body: form,
-      headers: {
-        'x-requested-with': 'XMLHttpRequest'
-      }
-    });
+    if (!json.data || !json.data.length) throw '🚫 No se pudo obtener el contenido'
 
-    const data = await res.json();
-    if (!data || !data.data || !data.data.length) return m.reply('❌ No se encontró el video');
-
-    for (let media of data.data) {
-      await conn.sendFile(m.chat, media.url, 'ig.mp4', `✅ Aquí tienes tu video`, m);
+    for (let media of json.data) {
+      await conn.sendFile(m.chat, media.url, 'igdl.mp4', `✅ Descargado desde Instagram`, m, false, {
+        thumbnail: media.thumbnail ? await (await fetch(media.thumbnail)).buffer() : null,
+        mimetype: 'video/mp4'
+      })
     }
 
-    await m.react("✅");
   } catch (e) {
-    console.log(e);
-    await m.reply('⚠️ Error descargando el video.');
-    await m.react("❌");
+    console.error(e)
+    m.reply('⚠️ Ocurrió un error al descargar el video.')
   }
-};
+}
 
-handler.command = ['ig', 'instagram'];
-handler.help = ['ig <link>'];
-handler.tags = ['descargas'];
-handler.group = false;
+handler.help = ['igdl <url>']
+handler.tags = ['downloader']
+handler.command = ['ig', 'instagram']
 
-export default handler;
+export default handler
