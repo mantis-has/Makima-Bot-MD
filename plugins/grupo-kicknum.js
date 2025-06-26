@@ -12,20 +12,16 @@ const handler = async (m, { conn, args, groupMetadata }) => {
   console.log(`🔍 Analizando miembros del grupo para prefijo +${prefijo}...`);
 
   for (const p of participantes) {
-    let jid = p.id;
-    // Soporte @lid, @s.whatsapp.net o @g.us
-    if (jid.endsWith('@lid')) {
-      try {
-        const resolvedJid = await conn.decodeJid(jid);
-        console.log(`Se pudo resolver jid de ${jid} a ${resolvedJid}`);
-        jid = resolvedJid;
-      } catch {
-        console.log(`No se pudo resolver jid de ${jid}`);
-      }
-    }
+    let jid = p.id; // ejemplo: 156981591593126@lid o 504123456789@s.whatsapp.net
+    let number = jid.split('@')[0]; // extrae solo el número
 
-    if (jid.startsWith(prefijo) || jid.includes(`@${prefijo}`)) {
-      usersToKick.push(jid);
+    if (number.startsWith(prefijo)) {
+      // Armar el jid real para expulsar
+      let realJid = number + '@s.whatsapp.net';
+      usersToKick.push(realJid);
+      console.log(`Usuario con prefijo encontrado: ${jid} -> expulsar ${realJid}`);
+    } else {
+      console.log(`Usuario sin prefijo: ${jid}`);
     }
   }
 
@@ -41,7 +37,7 @@ const handler = async (m, { conn, args, groupMetadata }) => {
       console.log(`✅ Usuario expulsado: ${user}`);
     } catch (e) {
       console.log(`❌ No pude expulsar a ${user}. Puede que no tenga permisos.`);
-      await m.reply(`⚠️ No pude expulsar a ${user}. Puede que el bot no sea admin.`);
+      await m.reply(`⚠️ No pude expulsar a @${user.split('@')[0]}. Puede que el bot no sea admin.`, null, { mentions: [user] });
     }
   }
 }
