@@ -6,33 +6,34 @@ const handler = async (m, { conn, usedPrefix, command }) => {
   const botPath = path.join('./JadiBots', senderNumber)
   const configPath = path.join(botPath, 'config.json')
 
-  // Verifica que envíe una imagen
-  if (!m.msg || !m.msg.imageMessage) {
-    return m.reply(`🖼️ Manda una imagen junto al comando *${usedPrefix + command}* para establecer el banner del menú.`)
+  // 🧩 Verifica si el mensaje es imagen o está respondiendo a una imagen
+  const quoted = m.quoted ? m.quoted : m
+  const mime = (quoted.msg || quoted).mimetype || ''
+
+  if (!/image\/(jpe?g|png|webp)/.test(mime)) {
+    return m.reply(`🖼️ Responde o manda una imagen junto al comando *${usedPrefix + command}* para poner el banner del menú.`)
   }
 
-  // Asegura que la carpeta del sub bot exista
   if (!fs.existsSync(botPath)) {
     return m.reply('❌ No encontré tu sub bot activo.')
   }
 
-  // Descarga la imagen
   try {
-    const media = await conn.downloadAndSaveMediaMessage(m, `banner-${senderNumber}`)
+    const media = await conn.downloadAndSaveMediaMessage(quoted, `banner-${senderNumber}`)
     const config = fs.existsSync(configPath)
       ? JSON.parse(fs.readFileSync(configPath))
       : {}
 
-    config.banner = media // guarda ruta de imagen local
+    config.banner = media // guarda la ruta
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
-    m.reply(`✅ Banner actualizado para el menú del sub bot.`)
+    m.reply(`✅ Banner actualizado con éxito.`)
   } catch (e) {
     console.error(e)
-    m.reply('❌ Error al guardar el banner.')
+    m.reply('❌ Error al procesar la imagen.')
   }
 }
 
 handler.command = /^setbotbanner$/i
-handler.owner = false // Solo el dueño del sub bot
+handler.owner = true
 export default handler
