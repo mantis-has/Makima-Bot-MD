@@ -1,51 +1,38 @@
-import fetch from 'node-fetch';
+import fetch from 'node-fetch'
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) {
-    return conn.reply(m.chat, '*🌷 Ingresa un enlace de YouTube válido.*', m);
-  }
-
-  // Validación básica de URL de YouTube
-  const youtubeRegex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.be)\/.+$/;
-  if (!youtubeRegex.test(text)) {
-    return conn.reply(m.chat, '*❌ El enlace proporcionado no es un enlace válido de YouTube.*', m);
-  }
+let handler = async (m, { conn, args, usedPrefix, command }) => {
+  let url = args[0]
+  if (!url || !url.includes('youtube.com') && !url.includes('youtu.be'))
+    return m.reply(`✦ Usa el comando así:\n${usedPrefix + command} <enlace de YouTube>\n\nEjemplo:\n${usedPrefix + command} https://youtube.com/watch?v=abc123`)
 
   try {
-    // Enviar mensaje informando que se está procesando
-    await conn.reply(m.chat, '*[ ℹ️ ] Se está enviando el video..*.', m);
+    m.react('⏳') // opcional
 
-    // Solicitar la API para obtener los detalles del video
-    let api = await fetch(`https://theadonix-api.vercel.app/api/ytmp4?url=${videoInfo.url}`);
-    let json = await api.json();
+    const api = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(url)}`
+    const res = await fetch(api)
+    const json = await res.json()
 
-    // Verificar si la API responde correctamente
-    if (!json || !json.downloadUrl) {
-      return conn.reply(m.chat, '❀ Hubo un error al obtener los datos del video, por favor intenta de nuevo más tarde.', m);
-    }
+    if (json.status !== 200 || !json.result?.video)
+      throw new Error('No se pudo obtener el video')
 
-    // Extraer la información del JSON
-    let { title, author, views, uploadDate, duration, downloadUrl, quality } = json;
+    let result = json.result
+    let caption = `🎬 *Título:* ${result.title}\n👤 *Autor:* ${result.author}\n⏱️ *Duración:* ${result.duration}\n📆 *Subido:* ${result.uploadDate}\n👀 *Vistas:* ${result.views}\n\n📥 *Calidad:* ${result.quality}`
 
-    // Formatear la información para mostrar
-    let infoMessage = `
-      - *Título:* ${title}
-      - *Autor:* ${author}
-      - *Visitas:* ${views}
-      - *Subido:* ${uploadDate}
-      - *Duración:* ${duration}
-      - *Calidad:* ${quality}p
-    `;
+    await conn.sendMessage(m.chat, {
+      video: { url: result.video },
+      caption: caption,
+      mimetype: 'video/mp4'
+    }, { quoted: m })
 
-    // Enviar el video con la información
-    await conn.sendMessage(m.chat, { video: { url: downloadUrl }, caption: infoMessage }, { quoted: m });
-
-  } catch (error) {
-    console.error(error);
-    return conn.reply(m.chat, '*ℹ️ Ocurrió un error al intentar descargar el video, por favor intenta de nuevo más tarde.*', m);
+  } catch (err) {
+    console.error('Error en ytmp4:', err)
+    m.reply('❌ Ocurrió un error al descargar el video.\nAsegúrate de que el enlace sea válido.')
   }
-};
+}
 
-handler.command = ['ytmp4'];
+handler.command = /^ytmp4$/i
+handler.help = ['ytmp4 <enlace>']
+handler.tags = ['descargas']
+handler.register = false // cámbialo a true si querés que solo usuarios registrados usen
 
-export default handler;
+export default handler
