@@ -8,8 +8,7 @@ const defaultImage = 'https://qu.ax/eOCUt.jpg'
 async function isAdminOrOwner(m, conn) {
   try {
     const groupMetadata = await conn.groupMetadata(m.chat)
-    const sender = m.sender || m.participant || m.key?.participant
-    const participant = groupMetadata.participants.find(p => p.id === sender)
+    const participant = groupMetadata.participants.find(p => p.id === m.sender)
     return participant?.admin || m.fromMe
   } catch {
     return false
@@ -55,14 +54,15 @@ handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink', 'on 
 // 🔥 lógica antes de cada mensaje
 handler.before = async (m, { conn }) => {
   if (!m.isGroup) return
-  const chat = global.db.data.chats[m.chat] ??= {}
+  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
+  const chat = global.db.data.chats[m.chat]
 
   // 🧨 Antiarabe
   if (chat.antiarabe && m.messageStubType === 27) {
     const newJid = m.messageStubParameters?.[0]
     if (/^(\+212|\+91|\+92|\+98|\+20|\+234|\+60|\+62|\+971)/.test(newJid)) {
       await conn.sendMessage(m.chat, {
-        text: `Mm ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
+        text: `🛑 ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
       })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
       return true
