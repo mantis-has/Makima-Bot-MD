@@ -30,7 +30,7 @@ let handler = async (m, { conn, args, usedPrefix, command }) => {
 `.trim()
 
     await conn.sendMessage(m.chat, {
-      document: { url: result.video },
+      video: { url: result.video },
       mimetype: 'video/mp4',
       fileName: result.filename,
       caption: caption
