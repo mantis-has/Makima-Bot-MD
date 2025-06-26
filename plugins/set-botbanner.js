@@ -35,5 +35,5 @@ const handler = async (m, { text, usedPrefix, command }) => {
 }
 
 handler.command = /^setbotbanner$/i
-handler.owner = true
+handler.owner = false
 export default handler
