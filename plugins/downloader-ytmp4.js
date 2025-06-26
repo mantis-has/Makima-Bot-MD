@@ -2,37 +2,49 @@ import fetch from 'node-fetch'
 
 let handler = async (m, { conn, args, usedPrefix, command }) => {
   let url = args[0]
-  if (!url || !url.includes('youtube.com') && !url.includes('youtu.be'))
+  if (!url || !/(youtube\.com|youtu\.be)/i.test(url))
     return m.reply(`✦ Usa el comando así:\n${usedPrefix + command} <enlace de YouTube>\n\nEjemplo:\n${usedPrefix + command} https://youtube.com/watch?v=abc123`)
 
   try {
-    m.react('⏳') // opcional
+    m.react('🎥') // Reacción mientras carga
 
     const api = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(url)}`
     const res = await fetch(api)
     const json = await res.json()
 
-    if (json.status !== 200 || !json.result?.video)
-      throw new Error('No se pudo obtener el video')
+    if (json.status !== 200 || !json.result?.video) throw '❌ No se pudo obtener el video'
 
     let result = json.result
-    let caption = `🎬 *Título:* ${result.title}\n👤 *Autor:* ${result.author}\n⏱️ *Duración:* ${result.duration}\n📆 *Subido:* ${result.uploadDate}\n👀 *Vistas:* ${result.views}\n\n📥 *Calidad:* ${result.quality}`
+
+    // Verificar si el archivo es accesible antes de enviar
+    const test = await fetch(result.video)
+    if (!test.ok) throw '⚠️ El archivo de video no está disponible o fue bloqueado'
+
+    let caption = `
+🎬 *Título:* ${result.title}
+👤 *Autor:* ${result.author}
+⏱️ *Duración:* ${result.duration}
+📆 *Subido:* ${result.uploadDate}
+👀 *Vistas:* ${result.views.toLocaleString()}
+📥 *Calidad:* ${result.quality}
+`.trim()
 
     await conn.sendMessage(m.chat, {
-      video: { url: result.video },
-      caption: caption,
-      mimetype: 'video/mp4'
+      document: { url: result.video },
+      mimetype: 'video/mp4',
+      fileName: result.filename,
+      caption: caption
     }, { quoted: m })
 
   } catch (err) {
-    console.error('Error en ytmp4:', err)
-    m.reply('❌ Ocurrió un error al descargar el video.\nAsegúrate de que el enlace sea válido.')
+    console.error('❌ Error en ytmp4:', err)
+    m.reply(typeof err === 'string' ? err : '❌ Error al descargar el video')
   }
 }
 
 handler.command = /^ytmp4$/i
-handler.help = ['ytmp4 <enlace>']
+handler.help = ['ytmp4 <url>']
 handler.tags = ['descargas']
-handler.register = false // cámbialo a true si querés que solo usuarios registrados usen
+handler.register = false
 
 export default handler
