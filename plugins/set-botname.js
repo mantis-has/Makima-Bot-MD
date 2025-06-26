@@ -8,21 +8,23 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     return m.reply(`*¡Ingresa el nuevo nombre para el Sub-Bot!* \n\nEjemplo:\n${usedPrefix + command} Yuru Kawaii`)
   }
 
-  // Obtiene la ruta base de la sesión del bot actual (ya sea principal o sub-bot)
-  // `conn.auth.creds.me.id` te da el JID del bot, lo cual es útil para identificar la sesión.
-  // Tu estructura de carpetas de sesión es 'JadiBots/<numero>/'.
-  // Para un sub-bot, conn.auth.creds.me.id.split(':')[0] debería ser su número.
-  const sessionId = conn?.auth?.creds?.me?.id?.split(':')[0]; // Esto debería darte el número del bot
-  if (!sessionId) {
+  // Obtiene la ruta base del JID del bot actual
+  // Esto debería ser el número de teléfono del bot
+  const botJid = conn?.user?.id || conn?.auth?.creds?.me?.id?.split(':')[0];
+  if (!botJid) {
     return m.reply('❌ No se pudo identificar la sesión de este bot para cambiar el nombre. Asegúrate de que el bot esté conectado.');
   }
 
-  // Construye la ruta a la carpeta de sesión del bot que está ejecutando el comando
-  // Asumiendo que las sesiones de sub-bots están en 'JadiBots/<numero>/'
-  const sessionDir = path.join(__dirname, '..', 'JadiBots', sessionId);
+  // Asegúrate de obtener solo los números del JID para el nombre de la carpeta
+  const sessionId = botJid.includes('@') ? botJid.split('@')[0] : botJid;
+
+  // Construye la ruta a la carpeta de sesión del bot que está ejecutando el comando.
+  // Usamos global.__dirname que apunta a la raíz del proyecto.
+  const sessionDir = path.join(global.__dirname(import.meta.url), 'JadiBots', sessionId);
 
   // Asegúrate de que la carpeta de sesión exista
   if (!fs.existsSync(sessionDir)) {
+      console.error(`Error: La carpeta de sesión esperada no existe: ${sessionDir}`);
       return m.reply('❌ No se encontró la carpeta de sesión para este bot. No se puede guardar la configuración.');
   }
 
@@ -34,7 +36,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
       config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
     } catch (e) {
       console.error(`Error al leer config.json de ${sessionId}:`, e);
-      m.reply('❌ Error al cargar la configuración existente del Sub-Bot.');
+      m.reply('❌ Error al cargar la configuración existente del Sub-Bot. El archivo puede estar corrupto.');
       return;
     }
   }
@@ -44,6 +46,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
     m.reply(`✅ Nombre del Sub-Bot actualizado a: *${newName}*`);
+    console.log(chalk.green(`Nombre del Sub-Bot ${sessionId} actualizado a: ${newName}`));
   } catch (e) {
     console.error(`Error al escribir config.json de ${sessionId}:`, e);
     m.reply('❌ Error al guardar el nuevo nombre del Sub-Bot.');
@@ -51,8 +54,8 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 }
 
 handler.command = /^setbotname$/i
-handler.tags = ['owner'] // Puedes ajustar los tags o categorías si tienes un sistema de ayuda
-handler.rowner = false // Solo el owner principal o los dueños de los sub-bots deberían poder usarlo. Ajusta según tu framework.
-handler.limit = false // No consume límites, es un ajuste de configuración
+handler.tags = ['owner'] 
+handler.rowner = false
+handler.limit = false 
 
 export default handler
