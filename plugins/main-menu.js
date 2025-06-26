@@ -14,7 +14,7 @@ const tags = {
 
 const defaultMenu = {
   before: `
-*✿ Holis, Soy %botname* ¿ Que tal ?
+*✿ Holis, Soy %botname* ¿ Qué tal ?
 > ❐ Aqui tienes el menu : 
 
 *「✧」ᴀᴅᴏɴɪx ᴀᴘɪ*
@@ -39,7 +39,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const date = d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
     const time = d.toLocaleTimeString(locale, { hour: 'numeric', minute: 'numeric' })
 
-    const uptime = clockString(process.uptime() * 1000)
     const totalreg = Object.keys(global.db.data.users).length
     const rtotalreg = Object.values(global.db.data.users).filter(user => user.registered).length
 
@@ -51,22 +50,23 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       premium: plugin.premium
     }))
 
-    // 👇 aquí empieza lo nuevo
     let nombreBot = global.namebot || 'Bot'
-    try {
-      const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
-      const configPath = join('./JadiBots', botActual, 'config.json')
-      if (fs.existsSync(configPath)) {
+    let bannerFinal = './storage/img/menu.jpg'
+
+    // 👇 Detecta sub bot y lee config.json si existe
+    const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
+    const configPath = join('./JadiBots', botActual, 'config.json')
+    if (fs.existsSync(configPath)) {
+      try {
         const config = JSON.parse(fs.readFileSync(configPath))
         if (config.name) nombreBot = config.name
+        if (config.banner) bannerFinal = config.banner
+      } catch (err) {
+        console.log('⚠️ No se pudo leer config del subbot:', err)
       }
-    } catch (e) {
-      console.log('⚠️ Error leyendo config.json del sub bot:', e)
     }
 
-    const botPrincipal = '+50493059810'
-    const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
-    const esPrincipal = botActual === botPrincipal.replace(/\D/g, '')
+    const esPrincipal = botActual === '+50493059810'.replace(/\D/g, '')
     const tipoBot = esPrincipal ? '*☁︎ Bot:* Principal 🅥' : '*☁︎ Bot:* Sub Bot 🅑'
 
     const menuConfig = conn.menu || defaultMenu
@@ -85,7 +85,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
                 .trim()
             }).join('\n')
           }).join('\n'),
-          menuConfig.footer,
+          menuConfig.footer
         ].join('\n')
       }),
       menuConfig.after
@@ -112,27 +112,27 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       greeting,
     }
 
-    let text = _text.replace(
+    const text = _text.replace(
       new RegExp(`%(${Object.keys(replace).sort((a, b) => b.length - a.length).join('|')})`, 'g'),
       (_, name) => String(replace[name])
     )
 
-    await conn.sendMessage(
-      m.chat,
-      {
-        image: fs.readFileSync('./storage/img/menu.jpg'),
-        caption: text.trim(),
-        contextInfo: {
-          mentionedJid: conn.parseMention(text),
-          isForwarded: true
-        }
-      },
-      { quoted: m }
-    )
+    // 📤 Detecta si es URL o archivo local
+    const isURL = typeof bannerFinal === 'string' && /^https?:\/\//i.test(bannerFinal)
+    const imageContent = isURL ? { image: { url: bannerFinal } } : { image: fs.readFileSync(bannerFinal) }
+
+    await conn.sendMessage(m.chat, {
+      ...imageContent,
+      caption: text.trim(),
+      contextInfo: {
+        mentionedJid: conn.parseMention(text),
+        isForwarded: true
+      }
+    }, { quoted: m })
 
   } catch (e) {
-    conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
     console.error('❌ Error en el menú:', e)
+    conn.reply(m.chat, '❎ Lo sentimos, el menú tiene un error.', m)
   }
 }
 
@@ -153,30 +153,13 @@ function clockString(ms) {
 const ase = new Date()
 let hour = ase.getHours()
 const greetingMap = {
-  0: 'una linda noche 🌙',
-  1: 'una linda noche 💤',
-  2: 'una linda noche 🦉',
-  3: 'una linda mañana ✨',
-  4: 'una linda mañana 💫',
-  5: 'una linda mañana 🌅',
-  6: 'una linda mañana 🌄',
-  7: 'una linda mañana 🌅',
-  8: 'una linda mañana 💫',
-  9: 'una linda mañana ✨',
-  10: 'un lindo día 🌞',
-  11: 'un lindo día 🌨',
-  12: 'un lindo día ❄',
-  13: 'un lindo día 🌤',
-  14: 'una linda tarde 🌇',
-  15: 'una linda tarde 🥀',
-  16: 'una linda tarde 🌹',
-  17: 'una linda tarde 🌆',
-  18: 'una linda noche 🌙',
-  19: 'una linda noche 🌃',
-  20: 'una linda noche 🌌',
-  21: 'una linda noche 🌃',
-  22: 'una linda noche 🌙',
-  23: 'una linda noche 🌃',
+  0: 'una linda noche 🌙', 1: 'una linda noche 💤', 2: 'una linda noche 🦉',
+  3: 'una linda mañana ✨', 4: 'una linda mañana 💫', 5: 'una linda mañana 🌅',
+  6: 'una linda mañana 🌄', 7: 'una linda mañana 🌅', 8: 'una linda mañana 💫',
+  9: 'una linda mañana ✨', 10: 'un lindo día 🌞', 11: 'un lindo día 🌨',
+  12: 'un lindo día ❄', 13: 'un lindo día 🌤', 14: 'una linda tarde 🌇',
+  15: 'una linda tarde 🥀', 16: 'una linda tarde 🌹', 17: 'una linda tarde 🌆',
+  18: 'una linda noche 🌙', 19: 'una linda noche 🌃', 20: 'una linda noche 🌌',
+  21: 'una linda noche 🌃', 22: 'una linda noche 🌙', 23: 'una linda noche 🌃',
 }
-
 var greeting = 'espero que tengas ' + (greetingMap[hour] || 'un buen día')
