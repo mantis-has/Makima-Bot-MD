@@ -34,6 +34,8 @@ const handler = async (m, { text, usedPrefix, command }) => {
   }
 }
 
-handler.command = /^setbotbanner$/i
+handler.help = ['setbanner']
+handler.tags= ['serbot']
+handler.command = /^setbanner$/i
 handler.owner = false
 export default handler
