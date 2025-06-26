@@ -111,8 +111,7 @@ const question = (texto) => new Promise((resolver) => rl.question(texto, resolve
 const logger = pino({
   timestamp: () => `,"time":"${new Date().toJSON()}"`,
 }).child({ class: 'client' });
-// CAMBIO IMPORTANTE AQUÍ: Nivel de log para depuración
-logger.level = 'info'; 
+logger.level = 'fatal';
 
 const connectionOptions = {
   version: version,
@@ -213,8 +212,6 @@ async function reconnectSubBot(botPath) {
 async function handleLogin() {
   if (conn.authState.creds.registered) {
     console.log(chalk.green('Sesión ya está registrada.'));
-    // Si la sesión ya está registrada, intentamos conectar directamente.
-    // La lógica de conexión.update manejará si se abre o se cierra.
     return;
   }
 
@@ -339,7 +336,7 @@ async function connectionUpdate(update) {
                 
                 // --- VERIFICACIÓN CLAVE: Asegurarse de que es un directorio ---
                 const stats = statSync(botPath);
-                if (stats.isDirectory()) { // Solo procesar si es un directorio
+                if (stats.isDirectory()) {
                     console.log(chalk.magenta(`[DEBUG main] Procesando posible sub-bot dir: ${subBotDirName}`));
                     const readBotPath = readdirSync(botPath);
                     if (readBotPath.includes(credsFile)) {
@@ -383,18 +380,12 @@ async function connectionUpdate(update) {
         await global.reloadHandler(true).catch(console.error);
         break;
       case DisconnectReason.connectionReplaced:
-        conn.logger.error(`Conexión reemplazada, se abrió otra sesión. Cierra esta sesión primero.`);
-        // Reinicio automático en caso de reemplazo de sesión
-        conn.logger.info(`Reinicio automático por reemplazo de sesión...`);
-        if (existsSync('./sessions/creds.json')) unlinkSync('./sessions/creds.json');
-        process.send('reset');
+        conn.logger.error(
+          `Conexión reemplazada, se abrió otra sesión. Cierra esta sesión primero.`
+        );
         break;
       case DisconnectReason.loggedOut:
         conn.logger.error(`Sesión cerrada, elimina la carpeta ${global.authFile} y escanea nuevamente.`);
-        // Reinicio automático al cerrar sesión (opcional, pero útil si quieres que el bot pida QR de nuevo)
-        conn.logger.info(`Reinicio automático por cierre de sesión...`);
-        if (existsSync('./sessions/creds.json')) unlinkSync('./sessions/creds.json');
-        process.send('reset');
         break;
       case DisconnectReason.restartRequired:
         conn.logger.info(`Reinicio necesario, reinicia el servidor si hay problemas.`);
