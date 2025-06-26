@@ -9,30 +9,36 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     return m.reply(`*¡Ingresa el nuevo nombre para el Sub-Bot!* \n\nEjemplo:\n${usedPrefix + command} Yuru Kawaii`)
   }
 
-  // Obtener el JID del bot actual y limpiarlo para usarlo como nombre de carpeta
   const botJid = conn?.user?.id || conn?.auth?.creds?.me?.id?.split(':')[0];
   if (!botJid) {
     return m.reply('❌ No se pudo identificar la sesión de este bot para cambiar el nombre. Asegúrate de que el bot esté conectado.');
   }
 
-  // Asegurarse de que el sessionId sea solo el número (sin @s.whatsapp.net)
   const sessionId = botJid.includes('@') ? botJid.split('@')[0] : botJid;
 
-  // --- CORRECCIÓN CLAVE AQUÍ ---
-  // Obtener la ruta del directorio del plugin actual
+  // --- CORRECCIÓN CLAVE PARA TERMUX Y CARPETA EXTERNA ---
+  // Obtener la ruta del directorio del plugin actual (e.g., /data/data/.../Yuru-Yuri/plugins/index/)
   const currentPluginDir = path.dirname(new URL(import.meta.url).pathname);
   
-  // Subir dos niveles para llegar a la raíz del proyecto (desde plugins/index/nombre.js -> plugins/ -> root/)
-  const projectRoot = path.join(currentPluginDir, '..', '..');
+  // Subir tres niveles para llegar al directorio padre de 'Yuru-Yuri'
+  // (plugins/index/ -> plugins/ -> Yuru-Yuri/ -> DIRECTORIO_PADRE_DE_YURU-YURI)
+  const commonParentDir = path.join(currentPluginDir, '..', '..', '..');
 
-  // Construir la ruta a la carpeta de sesión del bot específico
-  const sessionDir = path.join(projectRoot, 'JadiBots', sessionId);
-  // --- FIN CORRECCIÓN CLAVE ---
+  // Ahora, desde ese directorio común, construimos la ruta a JadiBots
+  const jadiBotsBaseDir = path.join(commonParentDir, 'JadiBots'); 
+  const sessionDir = path.join(jadiBotsBaseDir, sessionId);
+  // --- FIN CORRECCIÓN ---
 
-  // Verificar si la carpeta de sesión existe
+  // Verificar si la carpeta JadiBots base existe
+  if (!fs.existsSync(jadiBotsBaseDir)) {
+      console.error(chalk.red(`Error: La carpeta base 'JadiBots' no existe en: ${jadiBotsBaseDir}`));
+      return m.reply('❌ La carpeta principal de sub-bots (JadiBots) no se encontró. Revisa tu estructura de archivos.');
+  }
+
+  // Verificar si la carpeta de sesión específica del sub-bot existe
   if (!fs.existsSync(sessionDir)) {
       console.error(chalk.red(`Error: La carpeta de sesión esperada no existe para ${sessionId}: ${sessionDir}`));
-      return m.reply('❌ No se encontró la carpeta de sesión para este bot. No se puede guardar la configuración. Revisa la ruta.');
+      return m.reply('❌ No se encontró la carpeta de sesión para este sub-bot. No se puede guardar la configuración. Revisa la ruta y el nombre de la carpeta.');
   }
 
   const configPath = path.join(sessionDir, 'config.json');
@@ -62,7 +68,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
 handler.command = /^setbotname$/i
 handler.tags = ['owner']
-handler.rowner = false
+handler.rowner = true 
 handler.limit = false 
 
 export default handler
