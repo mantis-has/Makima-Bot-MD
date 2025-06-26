@@ -35,6 +35,8 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
   }
 }
 
+handler.help = ['setbotname']
+handler.tags= ['serbot']
 handler.command = /^setbotname$/i
 handler.owner = false // solo el dueño puede usar esto
 
