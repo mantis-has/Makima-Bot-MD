@@ -4,6 +4,7 @@ let linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i
 let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i
 const defaultImage = 'https://qu.ax/eOCUt.jpg'
 
+// helper: verificar si el usuario es admin o owner
 async function isAdminOrOwner(m, conn) {
   try {
     const groupMetadata = await conn.groupMetadata(m.chat)
@@ -14,6 +15,7 @@ async function isAdminOrOwner(m, conn) {
   }
 }
 
+// handler principal
 const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   if (!m.isGroup) return m.reply('🔒 Solo funciona en grupos.')
 
@@ -49,30 +51,34 @@ handler.group = true
 handler.tags = ['group']
 handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink', 'on antiarabe', 'off antiarabe']
 
+// lógica antes de cada mensaje
 handler.before = async (m, { conn }) => {
   if (!m.isGroup) return
-  const chat = global.db.data.chats[m.chat] ??= {}
+  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
+  const chat = global.db.data.chats[m.chat]
 
-  // ANTIARABE
+  // antiarabe
   if (chat.antiarabe && m.messageStubType === 27) {
-    let newJid = m.messageStubParameters?.[0]
+    const newJid = m.messageStubParameters?.[0]
     if (!newJid) return
 
-    // Solo el número, sin @s.whatsapp.net
-    let number = newJid.split('@')[0]
+    // sacar solo el número limpio sin sufijos raros
+    const number = newJid.split('@')[0].replace(/\D/g, '')
 
-    console.log('AntiArabe check número entrante:', number)
+    console.log('AntiArabe raw jid:', newJid)
+    console.log('AntiArabe número extraído:', number)
 
+    // checar prefijos +212 y otros que quieras
     if (/^(212|91|92|98|20|234|60|62|971)/.test(number)) {
       await conn.sendMessage(m.chat, {
-        text: `🚫 El número +${number} fue expulsado por Antiárabe activado.`
+        text: `Mm ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
       })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
       return true
     }
   }
 
-  // ANTILINK
+  // antilink
   if (chat.antilink) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const isUserAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
@@ -114,7 +120,7 @@ handler.before = async (m, { conn }) => {
     }
   }
 
-  // WELCOME / BYE
+  // welcome / bye
   if (chat.welcome && (m.messageStubType === 27 || m.messageStubType === 28 || m.messageStubType === 32)) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const groupSize = groupMetadata.participants.length
