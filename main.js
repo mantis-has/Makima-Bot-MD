@@ -467,4 +467,3 @@ Object.freeze(global.reload);
 
 watch(pluginFolder, global.reload);
 await global.reloadHandler();
-Al principio funcionó cuando iniciaba el bot se reconectaban pero ahora lo prendo y nada y aparte se desconectan con error 403 o algo asi
