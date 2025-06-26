@@ -4,7 +4,7 @@ let linkRegex = /chat\.whatsapp\.com\/[0-9A-Za-z]{20,24}/i
 let linkRegex1 = /whatsapp\.com\/channel\/[0-9A-Za-z]{20,24}/i
 const defaultImage = 'https://qu.ax/eOCUt.jpg'
 
-// helper: verificar si el usuario es admin o owner
+// Verificar si el que manda el mensaje es admin o owner
 async function isAdminOrOwner(m, conn) {
   try {
     const groupMetadata = await conn.groupMetadata(m.chat)
@@ -15,11 +15,11 @@ async function isAdminOrOwner(m, conn) {
   }
 }
 
-// 🔧 handler principal
+// Handler principal
 const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
   if (!m.isGroup) return m.reply('🔒 Solo funciona en grupos.')
 
-  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
+  global.db.data.chats[m.chat] ??= {}
   const chat = global.db.data.chats[m.chat]
   const type = (args[0] || '').toLowerCase()
   const enable = command === 'on'
@@ -51,24 +51,24 @@ handler.group = true
 handler.tags = ['group']
 handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink', 'on antiarabe', 'off antiarabe']
 
-// 🔥 logica antes de cada mensaje
 handler.before = async (m, { conn }) => {
   if (!m.isGroup) return
-  const chat = global.db.data.chats[m.chat] ??= {}
+  global.db.data.chats[m.chat] ??= {}
+  const chat = global.db.data.chats[m.chat]
 
-  // 🧨 Antiarabe
+  // Antiarabe
   if (chat.antiarabe && m.messageStubType === 27) {
     const newJid = m.messageStubParameters?.[0]
     if (/^(\+212|\+91|\+92|\+98|\+20|\+234|\+60|\+62|\+971)/.test(newJid)) {
       await conn.sendMessage(m.chat, {
-        text: `Mm ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
+        text: `🚷 ${newJid} será expulsado por tener número sospechoso (Antiárabe activado).`
       })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
       return true
     }
   }
 
-  // 💥 Antilink
+  // Antilink
   if (chat.antilink) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const isUserAdmin = groupMetadata.participants.find(p => p.id === m.sender)?.admin
@@ -110,7 +110,7 @@ handler.before = async (m, { conn }) => {
     }
   }
 
-  // 🌸 Welcome y Bye
+  // Welcome y Bye
   if (chat.welcome && (m.messageStubType === 27 || m.messageStubType === 28 || m.messageStubType === 32)) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const groupSize = groupMetadata.participants.length
@@ -141,7 +141,7 @@ handler.before = async (m, { conn }) => {
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
         caption: `${txtWelcome}\n\n${bienvenida}`,
-        contextInfo: { mentionedJid: [userId] }
+        contextInfo: { mentionedJid: [userId.replace(/[^0-9]/g, '') + '@s.whatsapp.net'] }
       })
     }
 
@@ -162,7 +162,7 @@ handler.before = async (m, { conn }) => {
       await conn.sendMessage(m.chat, {
         image: { url: profilePic },
         caption: `${txtBye}\n\n${despedida}`,
-        contextInfo: { mentionedJid: [userId] }
+        contextInfo: { mentionedJid: [userId.replace(/[^0-9]/g, '') + '@s.whatsapp.net'] }
       })
     }
   }
