@@ -311,7 +311,10 @@ async function connectionUpdate(update) {
     console.log(chalk.yellow('Conectado correctamente.'));
 
     // --- Lógica de reconexión de sub-bots al iniciar el bot principal ---
-    const rutaJadiBot = join(__dirname, './JadiBots');
+    // Ajustado para buscar 'JadiBots' un nivel arriba de la carpeta del bot principal (Yuru-Yuri)
+    const currentMainDir = global.__dirname(import.meta.url); // Obtiene la ruta de la carpeta principal (Yuru-Yuri)
+    const jadiBotsParentDir = path.join(currentMainDir, '..'); // Sube un nivel
+    const rutaJadiBot = path.join(jadiBotsParentDir, 'JadiBots'); // Entra a JadiBots
     
     if (!existsSync(rutaJadiBot)) {
         mkdirSync(rutaJadiBot, { recursive: true });
@@ -441,7 +444,7 @@ global.reload = async (_ev, filename) => {
     if (filename in global.plugins) {
       if (existsSync(dir)) conn.logger.info(`Updated plugin - '${filename}'`);
       else {
-        conn.logger.warn(`Deleted plugin - '${filename}'`);
+        conn.logger.warn(`Deleted plugin - '${filename}')`);
         return delete global.plugins[filename];
       }
     } else conn.logger.info(`New plugin - '${filename}'`);
