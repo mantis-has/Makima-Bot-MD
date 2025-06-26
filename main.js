@@ -313,9 +313,11 @@ async function connectionUpdate(update) {
     // --- Lógica de reconexión de sub-bots al iniciar el bot principal ---
     // Ajustado para buscar 'JadiBots' un nivel arriba de la carpeta del bot principal (Yuru-Yuri)
     const currentMainDir = global.__dirname(import.meta.url); // Obtiene la ruta de la carpeta principal (Yuru-Yuri)
-    const jadiBotsParentDir = path.join(currentMainDir, '..'); // Sube un nivel
-    const rutaJadiBot = path.join(jadiBotsParentDir, 'JadiBots'); // Entra a JadiBots
+    const jadiBotsParentDir = path.join(currentMainDir, '..'); // Sube un nivel al directorio padre de Yuru-Yuri
+    const rutaJadiBot = path.join(jadiBotsParentDir, 'JadiBots'); // Entra a JadiBots desde el padre
     
+    console.log(chalk.magenta(`[DEBUG main] Ruta esperada para JadiBots: ${rutaJadiBot}`));
+
     if (!existsSync(rutaJadiBot)) {
         mkdirSync(rutaJadiBot, { recursive: true });
         console.log(chalk.bold.cyan(`La carpeta: ${rutaJadiBot} se creó correctamente.`));
@@ -323,17 +325,35 @@ async function connectionUpdate(update) {
         console.log(chalk.bold.cyan(`La carpeta: ${rutaJadiBot} ya está creada.`));
     }
 
-    const readRutaJadiBot = readdirSync(rutaJadiBot);
-    if (readRutaJadiBot.length > 0) {
-        const credsFile = 'creds.json';
-        for (const subBotDir of readRutaJadiBot) {
-            const botPath = join(rutaJadiBot, subBotDir);
-            const readBotPath = readdirSync(botPath);
-            if (readBotPath.includes(credsFile)) {
-                // Llama a la función para reconectar cada sub-bot
-                await reconnectSubBot(botPath);
+    try {
+        const readRutaJadiBot = readdirSync(rutaJadiBot);
+        console.log(chalk.magenta(`[DEBUG main] Contenido de JadiBots: ${readRutaJadiBot.join(', ')}`));
+
+        if (readRutaJadiBot.length > 0) {
+            const credsFile = 'creds.json';
+            for (const subBotDirName of readRutaJadiBot) {
+                const botPath = join(rutaJadiBot, subBotDirName);
+                
+                // --- VERIFICACIÓN CLAVE: Asegurarse de que es un directorio ---
+                const stats = statSync(botPath);
+                if (stats.isDirectory()) {
+                    console.log(chalk.magenta(`[DEBUG main] Procesando posible sub-bot dir: ${subBotDirName}`));
+                    const readBotPath = readdirSync(botPath);
+                    if (readBotPath.includes(credsFile)) {
+                        console.log(chalk.green(`[DEBUG main] Credenciales encontradas para sub-bot: ${subBotDirName}. Intentando reconectar...`));
+                        await reconnectSubBot(botPath);
+                    } else {
+                        console.log(chalk.yellow(`[DEBUG main] No se encontró ${credsFile} en: ${subBotDirName}`));
+                    }
+                } else {
+                    console.log(chalk.gray(`[DEBUG main] Ignorando elemento no-directorio en JadiBots: ${subBotDirName}`));
+                }
             }
+        } else {
+            console.log(chalk.yellow(`[DEBUG main] No se encontraron sub-carpetas en JadiBots para reconectar.`));
         }
+    } catch (readDirError) {
+        console.error(chalk.red(`Error al leer el directorio JadiBots: ${readDirError.message}`));
     }
     // --- Fin de la lógica de reconexión de sub-bots ---
 
@@ -444,7 +464,7 @@ global.reload = async (_ev, filename) => {
     if (filename in global.plugins) {
       if (existsSync(dir)) conn.logger.info(`Updated plugin - '${filename}'`);
       else {
-        conn.logger.warn(`Deleted plugin - '${filename}')`);
+        conn.logger.warn(`Deleted plugin - '${filename}'`);
         return delete global.plugins[filename];
       }
     } else conn.logger.info(`New plugin - '${filename}'`);
