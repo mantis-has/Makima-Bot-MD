@@ -1,18 +1,19 @@
 
-import { spawn, exec, execSync } from 'child_process'
+const handler = async (m, { conn }) => {
+  const start = Date.now()
+  const msg = await m.reply('☄︎ Calculando ping...')
+  const end = Date.now()
+  const ping = end - start
 
-let handler = async (m, { conn }) => {
-         let timestamp = speed();
-         let latensi = speed() - timestamp;
-         exec(`neofetch --stdout`, (error, stdout, stderr) => {
-          let child = stdout.toString("utf-8");
-          let ssd = child.replace(/Memory:/, "Ram:");
-
-          conn.reply(m.chat, `☄︎ *Velocidad Actualmente*\n> Tiempo : ⴵ ${latensi.toFixed(4)}mss`, m, rcanal);
-            });
+  await conn.sendMessage(m.chat, {
+    text: `☁︎ *Ping:* ${ping} ms`,
+    edit: msg.key
+  })
 }
-handler.help = ['ping']
+
+handler.command = ['ping', 'latencia']
 handler.tags = ['info']
-handler.command = ['ping', 'p']
+handler.help = ['ping']
+handler.register = false
 
 export default handler
