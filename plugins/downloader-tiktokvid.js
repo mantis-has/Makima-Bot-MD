@@ -1,29 +1,47 @@
-import fetch from 'node-fetch';
+import axios from 'axios';
 
-const handler = async (m, { conn, args }) => {
-  if (!args[0]) return conn.reply(m.chat, '𖧊 Hola, necesito que me proporciones el nombre del video *Tiktok* que deseas Buscar.', m, rcanal)
-  await m.react('🕓')
-  try {
-    const url = `https://api-pbt.onrender.com/api/download/tiktokQuery?query=${encodeURIComponent(args.join(' '))}&apikey=a7q587awu57`;
-    const res = await fetch(url)
-    if (!res.ok) {
-      throw await res.text()
-    }
-    
-    const json = await res.json()
-    const result = json.data
-    if (!result || !result.sin_marca_de_agua) {
-      await m.react('✖️')
-      return
-    }
-    await conn.sendFile(m.chat, result.sin_marca_de_agua, 'tiktok.mp4', null, m, null, rcanal)
-    await m.react('✅')
-  } catch {
-    await m.react('✖️')
-  }
-}
+const handler = async (m, {
+    conn,
+    args,
+    usedPrefix,
+    text,
+    command
+}) => {
 
-handler.help = ['tiktokvid']
+  if (!text) return m.reply(`✐ Ingresa una búsqueda para TikTok\n> *Ejemplo:* ${usedPrefix + command} haikyuu edit`);
+
+  let res = await fetch(`https://apizell.web.id/download/tiktokplay?q=${encodeURIComponent(text)}`);
+  let json = await res.json();
+
+  if (!json.status || !json.data || !json.data.length) return m.reply('❌ No se encontró ningún video.');
+
+  let vid = json.data[0];
+
+  let caption = `「💜」*${vid.title}
+
+> ✦ *Autor:* » ${vid.author}
+> ✰ *Vistas:* » ${vid.views.toLocaleString()}
+> 🜸 *Link:* » ${vid.url}`;
+
+  await conn.sendMessage(m.chat, {
+    video: { url: vid.url },
+    caption,
+    contextInfo: {
+      externalAdReply: {
+        showAdAttribution: true,
+        title: vid.title,
+        body: `By ${vid.author} • ${vid.views.toLocaleString()} vistas`,
+        mediaType: 1,
+        thumbnailUrl: vid.thumbnail,
+        mediaUrl: vid.url,
+        sourceUrl: vid.url
+      }
+    }
+  }, { quoted: m });
+};
+
+handler.help = ['tiktokvid'];
 handler.tags = ['downloader'];
-handler.command = /^(ttvid|tiktokvid)$/i
-export default handler
+handler.command = ['tiktokvid', 'playtiktok'];
+
+export default handler;
