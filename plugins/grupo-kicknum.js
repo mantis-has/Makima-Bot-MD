@@ -1,42 +1,49 @@
-let handler = async (m, { conn, args }) => {
-  if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.')
+const handler = async (m, { conn, args, groupMetadata, participants, usedPrefix, command }) => {
+  const emoji = '📌'
+  const emoji2 = '⚠️'
 
-  const groupMetadata = await conn.groupMetadata(m.chat)
-  console.log('🔎 Participantes del grupo:')
-  groupMetadata.participants.forEach(p => {
-    console.log(`- ${p.id} admin: ${p.admin || 'miembro'}`)
-  })
+  if (!args[0]) return conn.reply(m.chat, `${emoji} Ingresa algún prefijo de país para usar el comando.\nEjemplo: *${usedPrefix + command} 54*`, m);
+  if (isNaN(args[0])) return conn.reply(m.chat, `${emoji2} El prefijo debe ser un número.\nEjemplo: *${usedPrefix + command} 54*`, m);
 
-  const userParticipant = groupMetadata.participants.find(p => p.id === m.sender)
-  console.log('🔎 Info usuario que manda:', userParticipant)
+  const prefijo = args[0].replace(/[+]/g, '');
+  const numerosGrupo = participants.map(p => p.id).filter(id => id.startsWith(prefijo) && id !== conn.user.jid);
 
-  const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin' || m.sender === groupMetadata.owner
-  if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.')
+  if (!numerosGrupo.length) return m.reply(`${emoji2} No hay ningún número en el grupo con el prefijo +${prefijo}`);
 
-  const prefix = args[0]
-  if (!prefix || !prefix.startsWith('+')) return m.reply('✳️ Usa el formato:\n.kicknum +212')
+  const delay = ms => new Promise(res => setTimeout(res, ms));
 
-  const usersToKick = groupMetadata.participants
-    .map(p => p.id)
-    .filter(jid => jid.startsWith(prefix.replace('+', '')) && !groupMetadata.participants.find(u => u.id === jid)?.admin)
+  switch (command) {
+    case 'listnum':
+    case 'listanum':
+      const lista = numerosGrupo.map(n => '⭔ @' + n.split('@')[0]).join('\n');
+      await conn.reply(m.chat, `${emoji} Números con el prefijo +${prefijo}:\n\n${lista}`, m, { mentions: numerosGrupo });
+      break;
 
-  if (usersToKick.length === 0) return m.reply(`😌 No encontré usuarios que empiecen con *${prefix}* y no sean admin.`)
+    case 'kicknum':
+      await conn.reply(m.chat, `♻️ Iniciando expulsión de usuarios con +${prefijo}...`, m);
 
-  await m.reply(`🚨 Expulsando a *${usersToKick.length}* con prefijo *${prefix}*...`)
+      for (const user of numerosGrupo) {
+        await delay(2000);
 
-  for (let user of usersToKick) {
-    try {
-      await conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-      console.log(`✅ Expulsado: ${user}`)
-    } catch (e) {
-      console.log(`❌ No se pudo expulsar a: ${user}`, e)
-    }
+        try {
+          const res = await conn.groupParticipantsUpdate(m.chat, [user], 'remove');
+          if (res?.[0]?.status === '404') {
+            m.reply(`⚠️ @${user.split('@')[0]} ya fue eliminado o salió.`, m.chat, { mentions: [user] });
+          }
+        } catch (e) {
+          m.reply(`❌ No pude expulsar a @${user.split('@')[0]}. Puede que no tenga permisos de admin.`, m.chat, {
+            mentions: [user]
+          });
+        }
+
+        await delay(3000);
+      }
+      break;
   }
-}
+};
 
-handler.help = ['kicknum +XXX']
-handler.tags = ['group']
-handler.command = ['kicknum']
-handler.group = true
+handler.command = ['kicknum', 'listnum', 'listanum'];
+handler.group = true;
+handler.fail = null;
 
-export default handler
+export default handler;
