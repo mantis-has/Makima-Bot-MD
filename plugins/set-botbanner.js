@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { downloadMediaMessage } from '@whiskeysockets/baileys'
 
 const handler = async (m, { conn, usedPrefix, command }) => {
   const senderNumber = m.sender.replace(/[^0-9]/g, '')
@@ -10,7 +11,7 @@ const handler = async (m, { conn, usedPrefix, command }) => {
   const mime = quoted?.mimetype || quoted?.msg?.mimetype || ''
 
   if (!/image\/(jpe?g|png|webp)/.test(mime)) {
-    return m.reply(`🖼️ Manda o responde una imagen con *${usedPrefix + command}* pa poner el banner del menú.`)
+    return m.reply(`🖼️ Manda o responde una imagen con *${usedPrefix + command}* para establecer el banner del menú.`)
   }
 
   if (!fs.existsSync(botPath)) {
@@ -18,10 +19,15 @@ const handler = async (m, { conn, usedPrefix, command }) => {
   }
 
   try {
-    const buffer = await conn.download(quoted)
+    const buffer = await downloadMediaMessage(
+      quoted,
+      'buffer',
+      {},
+      { reuploadRequest: conn.updateMediaMessage }
+    )
+
     const fileName = `banner-${senderNumber}.jpg`
     const savePath = path.join(botPath, fileName)
-
     fs.writeFileSync(savePath, buffer)
 
     const config = fs.existsSync(configPath)
@@ -31,10 +37,10 @@ const handler = async (m, { conn, usedPrefix, command }) => {
     config.banner = savePath
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
-    m.reply(`✅ Banner guardado correctamente pa tu menú sub bot 😎`)
-  } catch (e) {
-    console.error('❌ Error al guardar banner:', e)
-    m.reply('❌ No se pudo guardar el banner.')
+    m.reply(`✅ Banner del sub bot actualizado con éxito.`)
+  } catch (err) {
+    console.error('❌ Error al descargar o guardar el banner:', err)
+    m.reply('❌ Ocurrió un error al guardar el banner.')
   }
 }
 
