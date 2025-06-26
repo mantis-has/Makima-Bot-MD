@@ -27,7 +27,7 @@ const handler = async (m, { text, usedPrefix, command }) => {
     config.banner = bannerURL
 
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
-    m.reply(`✅ Banner guardado correctamente con:\n${bannerURL}`)
+    m.reply(`☁︎ Banner guardado correctamente con:\n${bannerURL}`)
   } catch (e) {
     console.error(e)
     m.reply('❌ No se pudo guardar el banner.')
