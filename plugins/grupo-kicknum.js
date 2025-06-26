@@ -2,28 +2,32 @@ const handler = async (m, { conn, args, command }) => {
   if (!m.isGroup) return m.reply('🔒 Este comando solo se usa en grupos.');
 
   const groupMetadata = await conn.groupMetadata(m.chat);
-  
+
   // Validar que quien manda el comando es admin
   const userParticipant = groupMetadata.participants.find(p => p.id === m.sender);
   const isUserAdmin = userParticipant?.admin === 'admin' || userParticipant?.admin === 'superadmin' || m.sender === groupMetadata.owner;
   if (!isUserAdmin) return m.reply('❌ Solo los admins pueden usar este comando.');
 
-  const prefijosArabes = ['212', '971', '20', '234', '60', '62', '92', '98', '91']; // +212, +971, etc
+  // Prefijos árabes comunes
+  const prefijosArabes = ['212', '971', '20', '234', '60', '62', '92', '98', '91'];
+
+  // Función para validar que el prefijo es exacto y no parte de otro número
+  function tienePrefijoExacto(numero, prefijo) {
+    if (!numero.startsWith(prefijo)) return false;
+    if (numero.length === prefijo.length) return true; // número justo igual al prefijo
+    // El siguiente carácter debe no ser dígito o no existir para ser exacto
+    const nextChar = numero.charAt(prefijo.length);
+    return !/[0-9]/.test(nextChar);
+  }
+
   const arabesParaKickear = [];
 
-  // Buscar participantes con prefijo árabe, incluyendo soporte para @lid y @s.whatsapp.net
   for (const participante of groupMetadata.participants) {
     let id = participante.id;
+    let numero = id.split('@')[0].replace(/\D/g, ''); // solo números
 
-    // En caso de @lid, tratar de resolver el número base (quitando @lid)
-    // A veces viene con @lid, a veces no, solo toma la parte del número
-    let numero = id.split('@')[0];
-
-    // Quitar cualquier prefijo tipo + o caracteres extra (por si acaso)
-    numero = numero.replace(/\D/g, '');
-
-    // Validar si el número empieza con alguno de los prefijos árabes
-    if (prefijosArabes.some(pref => numero.startsWith(pref))) {
+    // Buscar si coincide con algún prefijo EXACTO
+    if (prefijosArabes.some(pref => tienePrefijoExacto(numero, pref))) {
       arabesParaKickear.push(participante.id);
     }
   }
@@ -50,6 +54,6 @@ const handler = async (m, { conn, args, command }) => {
 
 handler.command = ['kickarab', 'kickarabes'];
 handler.group = true;
-
+handler.admin = true;
 
 export default handler;
