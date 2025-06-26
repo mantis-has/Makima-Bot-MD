@@ -49,7 +49,7 @@ const handler = async (m, { conn, command, args, isAdmin, isOwner }) => {
 handler.command = ['on', 'off']
 handler.group = true
 handler.tags = ['group']
-handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink', 'on antiarabe', 'off antiarabe']
+handler.help = ['on welcome', 'off welcome', 'on antilink', 'off antilink']
 
 // lógica antes de cada mensaje
 handler.before = async (m, { conn }) => {
