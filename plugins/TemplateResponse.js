@@ -1,13 +1,12 @@
 import fs from 'fs'
 import path from 'path'
 import chalk from 'chalk'
-import { useMultiFileAuthState, makeWASocket, makeCacheableSignalKeyStore, jidNormalizedUser, Browsers } from '@adiwajshing/baileys'
+import { useMultiFileAuthState, makeWASocket, Browsers, makeCacheableSignalKeyStore, jidNormalizedUser } from '@whiskeysockets/baileys'
 import Boom from '@hapi/boom'
-// Importa tu handler real
-import handler from '../handler.js' // ajusta ruta
+// Importa tu handler, asegurate que exporte la función que maneja mensajes
+import handler from '../path/to/handler.js' // Ajusta ruta
 
-// Versión y logger según tu setup
-const version = [2, 2306, 25] // ejemplo, pon la versión que uses
+const version = [2, 2306, 25] // Cambia si usas otra versión
 const logger = console
 
 async function reconnectSubBot(botPath) {
@@ -30,27 +29,26 @@ async function reconnectSubBot(botPath) {
       retryRequestDelayMs: 10,
       transactionOpts: { maxCommitRetries: 10, delayBetweenTriesMs: 10 },
       maxMsgRetryCount: 15,
-      appStateMacVerification: {
-        patch: false,
-        snapshot: false,
-      },
+      appStateMacVerification: { patch: false, snapshot: false },
       getMessage: async (key) => {
         const jid = jidNormalizedUser(key.remoteJid)
-        const msg = await subBotConn.store?.loadMessage(jid, key.id) // usa el store del subBotConn si existe
-        return msg?.message || ''
+        if (subBotConn.store && subBotConn.store.loadMessage) {
+          const msg = await subBotConn.store.loadMessage(jid, key.id)
+          return msg?.message || ''
+        }
+        return ''
       },
     })
 
-    subBotConn.ev.on('connection.update', (update) => {
-      const { connection, lastDisconnect } = update
+    subBotConn.ev.on('connection.update', ({ connection, lastDisconnect }) => {
       if (connection === 'open') {
         console.log(chalk.green(`Sub-bot conectado correctamente: ${botName}`))
       } else if (connection === 'close') {
         const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
         console.error(chalk.red(`Sub-bot desconectado en ${botName}. Razón: ${reason}`))
-        // Podés agregar reintentos acá si quieres
       }
     })
+
     subBotConn.ev.on('creds.update', saveSubBotCreds)
 
     if (handler && handler.handler) {
@@ -64,14 +62,14 @@ async function reconnectSubBot(botPath) {
     if (!global.subBots) global.subBots = {}
     global.subBots[botName] = subBotConn
 
-    return botName // éxito
+    return botName
   } catch (e) {
     console.error(chalk.red(`Error al reconectar sub-bot en ${botName}:`), e)
     throw e
   }
 }
 
-const handlerReconnectAll = async (m, { conn }) => {
+async function reconnectAllSubBots(m) {
   const jadiBotsPath = path.resolve('./JadiBots')
   if (!fs.existsSync(jadiBotsPath)) {
     return m.reply('❌ No encontré la carpeta ./JadiBots.')
@@ -87,7 +85,7 @@ const handlerReconnectAll = async (m, { conn }) => {
   let conectados = []
   let fallidos = []
 
-  m.reply(`🔄 Empezando a reconectar ${subBots.length} sub bots...`)
+  await m.reply(`🔄 Empezando a reconectar ${subBots.length} sub bots...`)
 
   for (const sub of subBots) {
     const subPath = path.join(jadiBotsPath, sub)
@@ -103,8 +101,12 @@ const handlerReconnectAll = async (m, { conn }) => {
   texto += `✅ Conectados (${conectados.length}):\n${conectados.length ? conectados.join('\n') : 'Ninguno'}\n\n`
   texto += `❌ Fallidos (${fallidos.length}):\n${fallidos.length ? fallidos.join('\n') : 'Ninguno'}`
 
-  m.reply(texto)
+  await m.reply(texto)
 }
 
-handlerReconnectAll.command = ['reconectar', 'recsubs', 'reconectarsubs']
-export default handlerReconnectAll
+export default {
+  name: 'reconectarsubs',
+  description: 'Reconecta todos los sub bots desde JadiBots',
+  command: ['reconectar', 'recsubs', 'recsub'],
+  run: reconnectAllSubBots
+}
