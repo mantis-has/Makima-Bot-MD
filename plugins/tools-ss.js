@@ -4,8 +4,8 @@ let handler = async (m, { conn, command, args }) => {
   if (!args[0]) return conn.reply(m.chat, `☁︎ Por favor, ingrese el Link de una página.`, m)
 
   try {
-    await m.react('⏳') // esperando
-    conn.reply(m.chat, `🧠 Procesando su solicitud...`, m)
+    await m.react('📍') // esperando
+    conn.reply(m.chat, `⚔️ Procesando su solicitud...`, m)
 
     let url = `https://image.thum.io/get/fullpage/${args[0]}`
     let res = await fetch(url, {
