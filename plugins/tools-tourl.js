@@ -6,9 +6,9 @@ import { fileTypeFromBuffer } from "file-type";
 let handler = async (m, { conn }) => {
   let q = m.quoted ? m.quoted : m;
   let mime = (q.msg || q).mimetype || '';
-  if (!mime) return conn.reply(m.chat, `${emoji} Por favor, responde a un archivo válido (imagen, video, etc.).`, m);
+  if (!mime) return conn.reply(m.chat, `Por favor, responde a un archivo válido (imagen, video, etc.).`, m, rcanal);
 
-  await m.react(rwait);
+  await m.react("📍");
 
   try {
     let media = await q.download();
@@ -19,13 +19,13 @@ let handler = async (m, { conn }) => {
     txt += `*» Enlace* : ${link}\n`;
     txt += `*» Tamaño* : ${formatBytes(media.length)}\n`;
     txt += `*» Expiración* : ${isTele ? 'No expira' : 'Desconocido'}\n\n`;
-    txt += `> *${dev}*`;
+    txt += `> *${namebot}*`;
 
-    await conn.sendFile(m.chat, media, 'thumbnail.jpg', txt, m, fkontak);
+    await conn.sendFile(m.chat, media, 'thumbnail.jpg', txt, m, rcanal);
 
-    await m.react(done);
+    await m.react("✅");
   } catch {
-    await m.react(error);
+    await m.react("😩");
   }
 };
 
