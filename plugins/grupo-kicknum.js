@@ -1,35 +1,42 @@
-import { igdl } from 'ruhend-scraper';
+import fetch from 'node-fetch';
+import FormData from 'form-data';
 
-const handler = async (m, { args, conn }) => {
-  if (!args[0] || !args[0].includes('instagram.com')) {
-    return conn.reply(m.chat, `✍️ Ingresa un enlace válido de Instagram.`, m);
-  }
+const handler = async (m, { conn, args }) => {
+  if (!args[0]) return m.reply('📎 Pasa el link del video de Instagram');
+
+  const url = args[0];
+  const form = new FormData();
+  form.append('q', url);
 
   try {
-    await m.react("🕒");
-    const res = await igdl(args[0]);
-    const data = res.data;
+    await m.react("⏳");
 
-    if (!data || data.length === 0) {
-      await m.react("❌");
-      return conn.reply(m.chat, '⚠️ No se encontró contenido descargable.', m);
-    }
+    const res = await fetch('https://saveig.app/api/ajaxSearch', {
+      method: 'POST',
+      body: form,
+      headers: {
+        'x-requested-with': 'XMLHttpRequest'
+      }
+    });
 
-    for (let media of data) {
-      await conn.sendFile(m.chat, media.url, 'instagram.mp4', `*Aquí tienes ฅ^•ﻌ•^ฅ.*`, m);
+    const data = await res.json();
+    if (!data || !data.data || !data.data.length) return m.reply('❌ No se encontró el video');
+
+    for (let media of data.data) {
+      await conn.sendFile(m.chat, media.url, 'ig.mp4', `✅ Aquí tienes tu video`, m);
     }
 
     await m.react("✅");
   } catch (e) {
-    console.error('⛔ Error en instagram:', e);
-    await m.react("😭");
-    return conn.reply(m.chat, `❌ Ocurrió un error al descargar.`, m);
+    console.log(e);
+    await m.reply('⚠️ Error descargando el video.');
+    await m.react("❌");
   }
 };
 
-handler.command = ['instagram', 'ig'];
+handler.command = ['ig', 'instagram'];
+handler.help = ['ig <link>'];
 handler.tags = ['descargas'];
-handler.help = ['instagram <url>', 'ig <url>'];
-handler.group = true;
+handler.group = false;
 
 export default handler;
