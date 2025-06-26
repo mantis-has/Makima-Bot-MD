@@ -14,7 +14,7 @@ const tags = {
 
 const defaultMenu = {
   before: `
-*✿ Holis, Soy %botname* ¿ Qué tal ?
+*☄︎ Hola, Soy %botname* ¿ Qué tal ?
 > ❐ Aqui tienes el menu : 
 
 *「✧」ᴀᴅᴏɴɪx ᴀᴘɪ*
