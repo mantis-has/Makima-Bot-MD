@@ -7,6 +7,7 @@ const tags = {
   downloader: '❀ Downloaders',
   tools: '❀ Tools',
   owner: '❀ Owner',
+  info: '❀ Creador',
   group: '❀ Group',
   search: '❀ Searchs',
   sticker: '❀ Stickers',
