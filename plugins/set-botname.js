@@ -28,7 +28,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
   try {
     fs.writeFileSync(configPath, JSON.stringify(config, null, 2))
-    m.reply(`✅ Nombre del sub bot cambiado a: *${text.trim()}*`)
+    m.reply(`☁︎ Nombre del sub bot cambiado a: *${text.trim()}*`)
   } catch (err) {
     console.error(err)
     m.reply('❌ Ocurrió un error al guardar el nombre.')
