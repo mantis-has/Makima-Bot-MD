@@ -175,6 +175,6 @@ Usa los comandos para iniciar uno de los juegos. Ejemplo: \`game rps\`.
 handler.help = ['game <nombre>'];
 handler.command = ['game'];
 handler.tags = ['game'];
-handler.register = true;
+handler.register = false
 
 export default handler;
