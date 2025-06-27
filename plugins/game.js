@@ -1,178 +1,132 @@
-const handler = async (msg, { conn, args }) => {
+const handler = async (msg, { conn }) => {
   const chatId = msg.key.remoteJid;
-  const command = args[0]?.toLowerCase();
 
-  if (!command || command === 'menu') {
-    // Menú central de juegos
-    const menuMessage = `
-🎮 *Menú de Juegos* 🎮
+  // Estado inicial del jugador y monstruo
+  let player = {
+    name: 'Héroe',
+    health: 100,
+    maxHealth: 100,
+    attack: () => Math.floor(Math.random() * 20) + 10,
+    heal: () => Math.floor(Math.random() * 15) + 10,
+  };
 
-1️⃣ *Piedra, Papel o Tijera*: \`game rps\`
-2️⃣ *Adivina el Número*: \`game guess\`
-3️⃣ *Tic Tac Toe*: \`game tictactoe\`
-4️⃣ *Batalla RPG*: \`game rpg\`
-5️⃣ *Trivia*: \`game trivia\`
+  let monster = {
+    name: 'Monstruo',
+    health: 80,
+    maxHealth: 80,
+    attack: () => Math.floor(Math.random() * 15) + 5,
+  };
 
-Usa los comandos para iniciar uno de los juegos. Ejemplo: \`game rps\`.
+  // Función para actualizar el estado del juego
+  const updateGame = async () => {
+    const gameMessage = `
+⚔️ *Batalla de Monstruos* ⚔️
+
+👤 *Jugador:* ${player.name}
+❤️ *Vida:* ${player.health}/${player.maxHealth}
+
+👹 *Monstruo:* ${monster.name}
+💔 *Vida del monstruo:* ${monster.health}/${monster.maxHealth}
+
+¿Qué acción deseas realizar?
     `;
 
-    await conn.sendMessage(chatId, {
-      text: menuMessage,
-    });
-    return;
-  }
-
-  // Piedra, Papel o Tijera
-  if (command === 'rps') {
     const buttons = [
-      { buttonId: 'rock', buttonText: { displayText: '🪨 Piedra' }, type: 1 },
-      { buttonId: 'paper', buttonText: { displayText: '📄 Papel' }, type: 1 },
-      { buttonId: 'scissors', buttonText: { displayText: '✂️ Tijera' }, type: 1 },
+      { buttonId: 'attack', buttonText: { displayText: '⚔️ Atacar' }, type: 1 },
+      { buttonId: 'heal', buttonText: { displayText: '💊 Curar' }, type: 1 },
+      { buttonId: 'defend', buttonText: { displayText: '🛡️ Defender' }, type: 1 },
+      { buttonId: 'run', buttonText: { displayText: '🏃 Huir' }, type: 1 },
     ];
 
     await conn.sendMessage(chatId, {
-      text: '🎮 *Piedra, Papel o Tijera* 🎮\n\nElige tu opción:',
+      text: gameMessage,
       buttons,
-      footer: '¡Juega ahora!',
+      footer: 'Elige una opción:',
     });
+  };
 
-    conn.on('button', async (button) => {
-      const userChoice = button.buttonId;
-      const choices = ['rock', 'paper', 'scissors'];
-      const botChoice = choices[Math.floor(Math.random() * choices.length)];
+  // Función para manejar las acciones
+  const handleAction = async (action) => {
+    let message = '';
 
-      let result = '';
-      if (userChoice === botChoice) {
-        result = '🤝 Empate 🤝';
-      } else if (
-        (userChoice === 'rock' && botChoice === 'scissors') ||
-        (userChoice === 'paper' && botChoice === 'rock') ||
-        (userChoice === 'scissors' && botChoice === 'paper')
-      ) {
-        result = '🎉 ¡Ganaste! 🎉';
-      } else {
-        result = '💔 Perdiste 💔';
-      }
+    switch (action) {
+      case 'attack':
+        const playerDamage = player.attack();
+        const monsterDamage = monster.attack();
 
-      await conn.sendMessage(chatId, {
-        text: `🎮 *Resultado:*\n\n🧍 Tú: ${userChoice}\n🤖 Bot: ${botChoice}\n\n${result}`,
-      });
-    });
-    return;
-  }
+        monster.health -= playerDamage;
+        player.health -= monsterDamage;
 
-  // Adivina el Número
-  if (command === 'guess') {
-    const secretNumber = Math.floor(Math.random() * 100) + 1;
-    let attempts = 0;
+        if (monster.health <= 0) {
+          message = `🎉 ¡Has derrotado al ${monster.name}!\n\nGracias por jugar.`;
+          await conn.sendMessage(chatId, { text: message });
+          return;
+        }
 
-    await conn.sendMessage(chatId, {
-      text: '🎮 *Adivina el Número* 🎮\n\nEscribe un número entre 1 y 100:',
-    });
+        if (player.health <= 0) {
+          message = `💀 Has sido derrotado por el ${monster.name}.\n\nGracias por jugar.`;
+          await conn.sendMessage(chatId, { text: message });
+          return;
+        }
 
-    conn.on('message', async (message) => {
-      const userGuess = parseInt(message.text);
-      attempts++;
-      let result = '';
+        message = `⚔️ Atacaste al ${monster.name} e infligiste ${playerDamage} de daño.\n👹 El ${monster.name} te infligió ${monsterDamage} de daño.\n\n❤️ *Tu vida:* ${player.health}\n💔 *Vida del monstruo:* ${monster.health}`;
+        break;
 
-      if (userGuess === secretNumber) {
-        result = `🎉 ¡Correcto! 🎉\nIntentos usados: ${attempts}`;
-        await conn.sendMessage(chatId, { text: result });
+      case 'heal':
+        const healAmount = player.heal();
+        player.health = Math.min(player.maxHealth, player.health + healAmount);
+        const monsterDamageHeal = monster.attack();
+        player.health -= monsterDamageHeal;
+
+        if (player.health <= 0) {
+          message = `💀 Has sido derrotado por el ${monster.name}.\n\nGracias por jugar.`;
+          await conn.sendMessage(chatId, { text: message });
+          return;
+        }
+
+        message = `💊 Te curaste ${healAmount} puntos de vida.\n👹 El ${monster.name} te infligió ${monsterDamageHeal} de daño.\n\n❤️ *Tu vida:* ${player.health}`;
+        break;
+
+      case 'defend':
+        const reducedDamage = Math.floor(monster.attack() / 2);
+        player.health -= reducedDamage;
+
+        if (player.health <= 0) {
+          message = `💀 Has sido derrotado por el ${monster.name}.\n\nGracias por jugar.`;
+          await conn.sendMessage(chatId, { text: message });
+          return;
+        }
+
+        message = `🛡️ Te defendiste y recibiste solo ${reducedDamage} de daño.\n\n❤️ *Tu vida:* ${player.health}`;
+        break;
+
+      case 'run':
+        message = `🏃 Huiste del ${monster.name}.\n\nGracias por jugar.`;
+        await conn.sendMessage(chatId, { text: message });
         return;
-      } else if (userGuess > secretNumber) {
-        result = '🔻 Muy alto 🔻';
-      } else {
-        result = '🔺 Muy bajo 🔺';
-      }
 
-      await conn.sendMessage(chatId, {
-        text: `🎮 *Resultado:*\n\nIntento ${attempts}: ${result}`,
-      });
-    });
-    return;
-  }
+      default:
+        message = 'Acción no válida.';
+    }
 
-  // Tic Tac Toe
-  if (command === 'tictactoe') {
-    const board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']; // Tablero inicial
+    await updateGame();
+    await conn.sendMessage(chatId, { text: message });
+  };
 
-    const renderBoard = () => `
-      ${board[0]} | ${board[1]} | ${board[2]}
-      ---------
-      ${board[3]} | ${board[4]} | ${board[5]}
-      ---------
-      ${board[6]} | ${board[7]} | ${board[8]}
-    `;
+  // Actualizar el juego inicialmente
+  await updateGame();
 
-    const buttons = board.map((cell, index) => ({
-      buttonId: `cell_${index}`,
-      buttonText: { displayText: cell === ' ' ? `⏺️` : cell },
-      type: 1,
-    }));
-
-    await conn.sendMessage(chatId, {
-      text: `🎮 *Tic Tac Toe* 🎮\n\n${renderBoard()}\n\nElige tu movimiento:`,
-      buttons,
-      footer: '¡Juega ahora!',
-    });
-
-    conn.on('button', async (button) => {
-      const index = parseInt(button.buttonId.split('_')[1]);
-      board[index] = 'X'; // Marcar movimiento del jugador
-      // Agregar lógica del bot aquí
-      await conn.sendMessage(chatId, {
-        text: `🎮 *Tablero actualizado:*\n\n${renderBoard()}`,
-      });
-    });
-    return;
-  }
-
-  // Batalla RPG
-  if (command === 'rpg') {
-    await conn.sendMessage(chatId, {
-      text: '🎮 *Batalla RPG* está en desarrollo.\n¡Próximamente!',
-    });
-    return;
-  }
-
-  // Trivia
-  if (command === 'trivia') {
-    const questions = [
-      { question: '¿Cuál es la capital de Francia?', answer: 'París' },
-      { question: '¿Quién escribió "Don Quijote"?', answer: 'Miguel de Cervantes' },
-      { question: '¿En qué año llegó el hombre a la luna?', answer: '1969' },
-    ];
-    const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
-
-    await conn.sendMessage(chatId, {
-      text: `🎮 *Trivia* 🎮\n\nPregunta: ${randomQuestion.question}`,
-    });
-
-    conn.on('message', async (message) => {
-      const userAnswer = message.text.toLowerCase();
-      if (userAnswer === randomQuestion.answer.toLowerCase()) {
-        await conn.sendMessage(chatId, {
-          text: '🎉 ¡Correcto! 🎉',
-        });
-      } else {
-        await conn.sendMessage(chatId, {
-          text: '❌ Incorrecto. Intenta de nuevo.',
-        });
-      }
-    });
-    return;
-  }
-
-  // Comando no reconocido
-  await conn.sendMessage(chatId, {
-    text: `❌ Juego no reconocido: \`${command}\`\nUsa \`game menu\` para ver los juegos disponibles.`,
+  // Manejo de botones
+  conn.on('button', async (button) => {
+    const action = button.buttonId;
+    await handleAction(action);
   });
 };
 
 // Configuración del comando
-handler.help = ['game <nombre>'];
-handler.command = ['game'];
+handler.help = ['battle'];
+handler.command = ['battle', 'game'];
 handler.tags = ['game'];
-handler.register = false
+handler.register = true;
 
 export default handler;
