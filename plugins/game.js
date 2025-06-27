@@ -127,6 +127,5 @@ const handler = async (msg, { conn }) => {
 handler.help = ['battle'];
 handler.command = ['battle', 'game'];
 handler.tags = ['game'];
-handler.register = true;
 
 export default handler;
