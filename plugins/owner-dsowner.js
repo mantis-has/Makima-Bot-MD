@@ -15,7 +15,7 @@ let sessionPath = `./${sessions}/`
 try {
 
 if (!existsSync(sessionPath)) {
-return await conn.reply(m.chat, `${emoji} La carpeta está vacía.`, m)
+return await conn.reply(m.chat, ` La carpeta está vacía.`, m)
 }
 let files = await fs.readdir(sessionPath)
 let filesDeleted = 0
