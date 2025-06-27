@@ -66,14 +66,8 @@ Usa los comandos para iniciar uno de los juegos. Ejemplo: \`game rps\`.
     const secretNumber = Math.floor(Math.random() * 100) + 1;
     let attempts = 0;
 
-    const buttons = [
-      { buttonId: 'guess', buttonText: { displayText: '🎲 Adivinar' }, type: 1 },
-    ];
-
     await conn.sendMessage(chatId, {
-      text: '🎮 *Adivina el Número* 🎮\n\nHe pensado un número entre 1 y 100. ¿Puedes adivinarlo?',
-      buttons,
-      footer: '¡Escribe tu elección!',
+      text: '🎮 *Adivina el Número* 🎮\n\nEscribe un número entre 1 y 100:',
     });
 
     conn.on('message', async (message) => {
@@ -100,7 +94,7 @@ Usa los comandos para iniciar uno de los juegos. Ejemplo: \`game rps\`.
 
   // Tic Tac Toe
   if (command === 'tictactoe') {
-    const board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']; // 3x3 tablero inicial
+    const board = [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']; // Tablero inicial
 
     const renderBoard = () => `
       ${board[0]} | ${board[1]} | ${board[2]}
@@ -122,9 +116,13 @@ Usa los comandos para iniciar uno de los juegos. Ejemplo: \`game rps\`.
       footer: '¡Juega ahora!',
     });
 
-    // Implementar lógica de Tic Tac Toe (Por simplicidad, en desarrollo)
-    await conn.sendMessage(chatId, {
-      text: '🎮 *Tic Tac Toe* está en desarrollo.\n¡Próximamente!',
+    conn.on('button', async (button) => {
+      const index = parseInt(button.buttonId.split('_')[1]);
+      board[index] = 'X'; // Marcar movimiento del jugador
+      // Agregar lógica del bot aquí
+      await conn.sendMessage(chatId, {
+        text: `🎮 *Tablero actualizado:*\n\n${renderBoard()}`,
+      });
     });
     return;
   }
@@ -175,6 +173,6 @@ Usa los comandos para iniciar uno de los juegos. Ejemplo: \`game rps\`.
 handler.help = ['game <nombre>'];
 handler.command = ['game'];
 handler.tags = ['game'];
-handler.register = false
+handler.register = true;
 
 export default handler;
