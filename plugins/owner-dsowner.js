@@ -1,47 +1,47 @@
-
-import { readdirSync, unlinkSync, existsSync, promises as fs, rmSync } from 'fs'
+import { promises as fs, existsSync } from 'fs'
 import path from 'path'
 
-var handler = async (m, { conn, usedPrefix }) => {
+var handler = async (m, { conn }) => {
+  if (global.conn.user.jid !== conn.user.jid) {
+    return conn.reply(m.chat, `Usa este comando solo en el número principal del bot.`, m)
+  }
+  
+  await conn.reply(m.chat, `Iniciando eliminación de archivos de sesión excepto creds.json...`, m)
+  m.react('⌛') // usa el emoji que quieras para "espera"
 
-if (global.conn.user.jid !== conn.user.jid) {
-return conn.reply(m.chat, `Utiliza este comando directamente en el número principal del Bot.`, m)
-}
-await conn.reply(m.chat, ` Iniciando proceso de eliminación de todos los archivos de sesión, excepto el archivo creds.json...`, m)
-m.react(rwait)
+  const sessionPath = './sessions/'
 
-let sessionPath = `./${sessions}/`
+  try {
+    if (!existsSync(sessionPath)) {
+      return conn.reply(m.chat, `La carpeta de sesiones no existe o está vacía.`, m)
+    }
 
-try {
+    const files = await fs.readdir(sessionPath)
+    let deletedCount = 0
 
-if (!existsSync(sessionPath)) {
-return await conn.reply(m.chat, ` La carpeta está vacía.`, m)
-}
-let files = await fs.readdir(sessionPath)
-let filesDeleted = 0
-for (const file of files) {
-if (file !== 'creds.json') {
-await fs.unlink(path.join(sessionPath, file))
-filesDeleted++;
-}
-}
-if (filesDeleted === 0) {
-await conn.reply(m.chat, `La carpeta esta vacía.`, m)
-} else {
-m.react(done)
-await conn.reply(m.chat, `> Se eliminaron ${filesDeleted} archivos de sesión, excepto el archivo creds.json.`, m)
-conn.reply(m.chat, ` *¡Hola! ¿logras verme?*`, m)
+    for (const file of files) {
+      if (file !== 'creds.json') {
+        await fs.unlink(path.join(sessionPath, file))
+        deletedCount++
+      }
+    }
 
-}
-} catch (err) {
-console.error('Error al leer la carpeta o los archivos de sesión:', err);
-await conn.reply(m.chat, `${msm} Ocurrió un fallo.`, m)
+    if (deletedCount === 0) {
+      await conn.reply(m.chat, `No había archivos para eliminar, solo creds.json está presente.`, m)
+    } else {
+      m.react('✅') // emoji de done
+      await conn.reply(m.chat, `Se eliminaron ${deletedCount} archivos de sesión, creds.json quedó intacto.`, m)
+      conn.reply(m.chat, `*¡Hola! ¿logras verme?*`, m)
+    }
+  } catch (error) {
+    console.error('Error limpiando sesiones:', error)
+    await conn.reply(m.chat, `Ocurrió un error durante la limpieza.`, m)
+  }
 }
 
-}
 handler.help = ['dsowner']
 handler.tags = ['owner']
 handler.command = ['delai', 'dsowner', 'clearallsession']
-handler.rowner = true;
+handler.rowner = true
 
 export default handler
