@@ -4,7 +4,7 @@ import axios from 'axios';
 let handler = async (m, { conn, text, usedPrefix, command, args }) => {
   try {
     if (!text) {
-      return conn.reply(m.chat, `*${xdownload} Por favor, ingresa la URL del vídeo de YouTube.*`, m);
+      return conn.reply(m.chat, `*Por favor, ingresa la URL del vídeo de YouTube.*`, m);
     }
 
     if (!/^(?:https?:\/\/)?(?:www\.|m\.|music\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(args[0])) {
