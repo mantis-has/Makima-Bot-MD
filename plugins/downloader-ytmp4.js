@@ -1,50 +1,94 @@
-import fetch from 'node-fetch'
+import fetch from "node-fetch";
+import axios from 'axios';
 
-let handler = async (m, { conn, args, usedPrefix, command }) => {
-  let url = args[0]
-  if (!url || !/(youtube\.com|youtu\.be)/i.test(url))
-    return m.reply(`✦ Usa el comando así:\n${usedPrefix + command} <enlace de YouTube>\n\nEjemplo:\n${usedPrefix + command} https://youtube.com/watch?v=abc123`)
-
+let handler = async (m, { conn, text, usedPrefix, command, args }) => {
   try {
-    m.react('🎥') // Reacción mientras carga
+    if (!text) {
+      return conn.reply(m.chat, `*Por favor, ingresa la URL del vídeo de YouTube.*`, m);
+    }
 
-    const api = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(url)}`
-    const res = await fetch(api)
-    const json = await res.json()
+    if (!/^(?:https?:\/\/)?(?:www\.|m\.|music\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/)([\w\-_]+)\&?/.test(args[0])) {
+      return m.reply(`*⚠️ Enlace inválido, por favor coloque un enlace válido de YouTube.*`);
+    }
 
-    if (json.status !== 200 || !json.result?.video) throw '❌ No se pudo obtener el video'
+    m.react('🕒');
+    let json = await ytdl(args[0]);
+    let size = await getSize(json.url);
+    let sizeStr = size ? await formatSize(size) : 'Desconocido';
 
-    let result = json.result
+    const cap = `*${json.title}*\n≡ *🍫 \`URL:\`* ${args[0]}\n≡ *🔥 \`Peso:\`* ${sizeStr}`;
 
-    // Verificar si el archivo es accesible antes de enviar
-    const test = await fetch(result.video)
-    if (!test.ok) throw '⚠️ El archivo de video no está disponible o fue bloqueado'
+    conn.sendFile(m.chat, await (await fetch(json.url)).buffer(), `${json.title}.mp4`, cap, m, null, { asDocument: true, mimetype: "video/mp4" });
 
-    let caption = `
-🎬 *Título:* ${result.title}
-👤 *Autor:* ${result.author}
-⏱️ *Duración:* ${result.duration}
-📆 *Subido:* ${result.uploadDate}
-👀 *Vistas:* ${result.views.toLocaleString()}
-📥 *Calidad:* ${result.quality}
-`.trim()
-
-    await conn.sendMessage(m.chat, {
-      video: { url: result.video },
-      mimetype: 'video/mp4',
-      fileName: result.filename,
-      caption: caption
-    }, { quoted: m })
-
-  } catch (err) {
-    console.error('❌ Error en ytmp4:', err)
-    m.reply(typeof err === 'string' ? err : '❌ Error al descargar el video')
+    m.react('✅');
+  } catch (e) {
+    console.error(e);
+    m.reply(`Ocurrió un error:\n${e.message}`);
   }
+};
+
+handler.help = ['ytmp4doc'];
+handler.command = ['playvidoc', 'ytmp4doc'];
+handler.tags = ['downloader'];
+
+export default handler;
+
+async function ytdl(url) {
+  const headers = {
+    "accept": "*/*",
+    "accept-language": "id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+    "sec-ch-ua": "\"Not A(Brand\";v=\"8\", \"Chromium\";v=\"132\"",
+    "sec-ch-ua-mobile": "?1",
+    "sec-ch-ua-platform": "\"Android\"",
+    "sec-fetch-dest": "empty",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "Referer": "https://id.ytmp3.mobi/",
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+  };
+  const initial = await fetch(`https://d.ymcdn.org/api/v1/init?p=y&23=1llum1n471&_=${Math.random()}`, { headers });
+  const init = await initial.json();
+  const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*embed\/))([^&?/]+)/)?.[1];
+  const convertURL = init.convertURL + `&v=${id}&f=mp4&_=${Math.random()}`;
+
+  const converts = await fetch(convertURL, { headers });
+  const convert = await converts.json();
+
+  let info = {};
+  for (let i = 0; i < 3; i++) {
+    const progressResponse = await fetch(convert.progressURL, { headers });
+    info = await progressResponse.json();
+    if (info.progress === 3) break;
+  }
+
+  return {
+    url: convert.downloadURL,
+    title: info.title || 'video'
+  };
 }
 
-handler.command = /^ytmp4$/i
-handler.help = ['ytmp4 <url>']
-handler.tags = ['descargas']
-handler.register = false
+async function formatSize(bytes) {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
 
-export default handler
+  if (!bytes || isNaN(bytes)) return 'Desconocido';
+
+  while (bytes >= 1024 && i < units.length - 1) {
+    bytes /= 1024;
+    i++;
+  }
+
+  return `${bytes.toFixed(2)} ${units[i]}`;
+}
+
+async function getSize(url) {
+  try {
+    const response = await axios.head(url);
+    const contentLength = response.headers['content-length'];
+    if (!contentLength) return null;
+    return parseInt(contentLength, 10);
+  } catch (error) {
+    console.error("Error al obtener el tamaño:", error.message);
+    return null;
+  }
+}
