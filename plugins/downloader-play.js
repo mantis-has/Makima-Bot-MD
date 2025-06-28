@@ -2,10 +2,9 @@ import fetch from "node-fetch"
 import yts from "yt-search"
 
 const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
-
 const limit = 100 // MB
 
-// 📣
+// Canal de reenvío (si usás newsletters en WhatsApp)
 const rcanal = {
   contextInfo: {
     isForwarded: true,
@@ -14,7 +13,6 @@ const rcanal = {
       serverMessageId: 100,
       newsletterName: namecanal,
     }
-    // externalAdReply removido intencionalmente, ya q hace el mensaje invisible :v
   }
 }
 
@@ -32,11 +30,9 @@ const handler = async (m, { conn, text, command }) => {
     }
 
     let video = res.all[0]
-
     if (!video) return m.reply("❌ No se pudo obtener información del video.", null, rcanal)
 
     let durationTimestamp = video.duration?.timestamp || "Desconocida"
-
     const authorName = video.author?.name || "Desconocido"
     const title = video.title || "Sin título"
     const views = video.views || "Desconocidas"
@@ -115,16 +111,18 @@ const downloadVideo = async (conn, m, video, title) => {
     const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(video.url)}`)
     const json = await res.json()
 
-    if (!json.result?.video) throw new Error("No se pudo obtener el enlace de descarga del video")
+    if (json?.status !== 200 || !json.result?.video) {
+      throw new Error(json?.mensaje || "No se pudo obtener el enlace de descarga del video")
+    }
 
-    const { video: videoUrl, filename } = json.result
+    const { video: videoUrl, filename, quality, size } = json.result
 
     let sizemb = 0
     try {
       const head = await fetch(videoUrl, { method: 'HEAD' })
-      const size = head.headers.get('content-length')
-      if (size) {
-        const bytes = parseInt(size)
+      const sizeHeader = head.headers.get('content-length')
+      if (sizeHeader) {
+        const bytes = parseInt(sizeHeader)
         sizemb = bytes / (1024 * 1024)
       }
     } catch (e) {
@@ -137,13 +135,15 @@ const downloadVideo = async (conn, m, video, title) => {
 
     const doc = sizemb >= limit && sizemb > 0
 
-    console.log("✧ Se está enviando tu vídeo..")
+    const caption = `🎥 *${title}*\n✦ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño: ${size || sizemb.toFixed(2) + ' MB'}\n\n📥 Enviado por: *Mai*`
+
+    console.log("✧ Enviando video...")
     await conn.sendFile(
       m.chat,
       videoUrl,
       `${(filename || title).replace(/[^\w\s]/gi, '')}.mp4`,
+      caption,
       m,
-      null,
       { asDocument: doc, mimetype: 'video/mp4' }
     )
 
