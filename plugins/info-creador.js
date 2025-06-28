@@ -32,9 +32,9 @@ END:VCARD`
 
   let vcardYoSoyYo = `BEGIN:VCARD
 VERSION:3.0
-N:${nombreYoSoyYo}
-FN:${nombreYoSoyYo}
-TEL;waid=${numberYoSoyYo}:${numberYoSoyYo}
+N:${nombreCreatora}
+FN:${nombreCreatora}
+TEL;waid=${numberCreatora}:${numberCreatora}
 END:VCARD`
 
   // Envía el canal como texto
@@ -47,7 +47,7 @@ END:VCARD`
       contacts: [
         { vcard: vcardCreator },
         { vcard: vcardBot },
-        { vcard: vcardYoSoyYo }
+        { vcard: vcardCreatora }
       ]
     }
   }, { quoted: m })
@@ -55,6 +55,6 @@ END:VCARD`
 
 handler.help = ['owner']
 handler.tags = ['main']
-handler.command = ['owner', 'creatora', 'creadora', 'dueña']
+handler.command = ['owner', 'creatora', 'creador', 'dueño']
 
 export default handler
