@@ -1,56 +1,46 @@
-import fetch from "node-fetch"
-import yts from "yt-search"
+import fetch from 'node-fetch'
 
-let handler = async (m, { conn, text, command, usedPrefix }) => {
-  if (!text) {
-    return m.reply(`🌐 Ejemplo de uso:\n\n${usedPrefix + command} https://youtu.be/aBfUFr9SBY0`)
-  }
+let handler = async (m, { conn, text, usedPrefix, command }) => {
+  if (!text) return m.reply(`*🔎 Uso correcto:*\n\n${usedPrefix + command} nombre de la canción`)
 
-  await m.react("🔎")
-
-  const search = await yts(text)
-  const video = search?.all?.[0]
-  if (!video) return m.reply("❌ No se encontró el video.")
-
-  await m.react("📥")
-
-  const api = `https://theadonix-api.vercel.app/api/ytmp42?url=${encodeURIComponent(video.url)}`
-  
   try {
-    const res = await fetch(api)
-    const json = await res.json()
+    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
 
-    if (json?.status !== 200 || !json.result?.video) {
-      throw new Error(json?.mensaje || "No se pudo obtener el enlace del video.")
+    // Buscar con API de Delirius (suponiendo endpoint que recibe ?q=)
+    const searchRes = await fetch(`https://api-delirius.vercel.app/api/ytsearch?q=${encodeURIComponent(text)}`)
+    const searchJson = await searchRes.json()
+
+    if (!searchJson?.result || searchJson.result.length === 0) {
+      return m.reply('❌ No encontré nada con ese nombre, prueba con otro.')
     }
 
-    const { title, video: videoUrl, quality, size } = json.result
+    // Tomar el primer resultado
+    const video = searchJson.result[0]
+    const videoUrl = video.url || video.link || `https://youtu.be/${video.videoId}`
 
-    // Mensaje de espera con título
-    const caption = `📹 *${title}*\n🎞️ Calidad: ${quality || "Desconocida"}\n📦 Tamaño aprox: ${size || "N/A"}\n\n📽️ Video descargado por *Yuru Yuri* bot.`
+    // Descargar video con tu API
+    const apiURL = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(videoUrl)}`
+    const apiRes = await fetch(apiURL)
+    const apiJson = await apiRes.json()
 
-    // Intenta enviar como archivo normal
-    await conn.sendMessage(
-      m.chat,
-      {
-        video: { url: videoUrl },
-        mimetype: 'video/mp4',
-        caption: caption,
-      },
-      { quoted: m }
-    )
+    if (apiJson?.status !== 200 || !apiJson?.result) {
+      return m.reply(`❌ Error al procesar el video\n${apiJson?.mensaje || 'Intenta con otro nombre'}`)
+    }
 
-    await m.react("✅")
+    const { title, video: videoFile, filename, quality, size } = apiJson.result
 
-  } catch (err) {
-    console.error("[play2 error]", err)
-    await m.reply(`❌ Error al procesar el video:\n${err.message}`)
-    await m.react("❌")
+    await conn.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
+
+    await conn.sendFile(m.chat, videoFile, filename, `🎵 *${title}*\n📼 Calidad: ${quality}\n📦 Tamaño aprox: ${size}`, m)
+
+  } catch (e) {
+    console.error('[play2]', e)
+    m.reply(`❌ Error al buscar o descargar\n\n${e.message}`)
   }
 }
 
-handler.command = ['play2']
-handler.help = ['play2 <nombre o url>']
+handler.help = ['play2 <nombre>']
 handler.tags = ['downloader']
+handler.command = ['play2']
 
 export default handler
