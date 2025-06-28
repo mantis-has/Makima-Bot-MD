@@ -4,19 +4,18 @@ import yts from "yt-search"
 const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
 const limit = 100 // MB máximo permitido
 
-// Datos de tu canal, cambia estos valores a lo que uses
+// Canal (personalizalo si querés)
 const rcanal = {
   contextInfo: {
     isForwarded: true,
     forwardedNewsletterMessageInfo: {
-      newsletterJid: idcanal, // reemplaza acá
+      newsletterJid: idcanal,
       serverMessageId: 100,
-      newsletterName: namecanal, // reemplaza acá
+      newsletterName: namecanal,
     }
   }
 }
 
-// Limpia nombre para archivo
 const sanitizeFilename = (name) => {
   return name
     .replace(/[\\\/:*?"<>|]/g, '')
@@ -26,7 +25,7 @@ const sanitizeFilename = (name) => {
 }
 
 const handler = async (m, { conn, text, command }) => {
-  if (!text) return m.reply(`*🌐 Ejemplo de uso:*\n\n${command} https://youtu.be/aBfUFr9SBY0`, null, rcanal)
+  if (!text) return m.reply(`*🌐 Ejemplo de uso:*\n\n${command} Rick Astley`, null, rcanal)
 
   await m.react("🕒")
   console.log("💎 Buscando en YouTube...")
@@ -63,18 +62,18 @@ const handler = async (m, { conn, text, command }) => {
   }
 }
 
-// AUDIO con ytmp3 API
+// AUDIO con nueva API Stellar
 const downloadAudio = async (conn, m, video, title) => {
   try {
     console.log("✦ Solicitando audio...")
 
-    const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp3?query=${encodeURIComponent(video.url)}`)
+    const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp3?url=${encodeURIComponent(video.url)}`)
     const json = await res.json()
 
-    if (!json.result?.audio) throw new Error("No se pudo obtener el audio")
+    if (json.status !== 200 || !json.result?.audio) throw new Error("No se pudo obtener el audio")
 
     const { audio, filename } = json.result
-    const safeName = sanitizeFilename(filename || title) + ".mp3"
+    const safeName = sanitizeFilename(filename || title)
 
     await conn.sendFile(
       m.chat,
@@ -95,17 +94,14 @@ const downloadAudio = async (conn, m, video, title) => {
   }
 }
 
-// VIDEO con ytmp42 API y preview normal
+// VIDEO (sin cambios)
 const downloadVideo = async (conn, m, video, title) => {
   try {
     const api = `https://theadonix-api.vercel.app/api/ytmp42?url=${encodeURIComponent(video.url)}`
-
     const res = await fetch(api)
     const json = await res.json()
 
-    if (json?.status !== 200) {
-      throw new Error(json?.mensaje || 'No se pudo obtener el video')
-    }
+    if (json?.status !== 200) throw new Error(json?.mensaje || 'No se pudo obtener el video')
 
     const { title: videoTitle, video: videoUrl, filename, quality, size } = json.result
 
