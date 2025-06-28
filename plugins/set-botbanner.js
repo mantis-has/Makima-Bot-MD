@@ -3,7 +3,7 @@ import path from 'path'
 
 const handler = async (m, { text, usedPrefix, command }) => {
   const senderNumber = m.sender.replace(/[^0-9]/g, '')
-  const botPath = path.join('./JadiBots', senderNumber)
+  const botPath = path.join('./MakiJadiBots', senderNumber)
   const configPath = path.join(botPath, 'config.json')
 
   // Valida si se manda un link de imagen
