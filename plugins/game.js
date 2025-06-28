@@ -23,26 +23,22 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
     }
 
     const { title, video: videoUrl, quality, size } = json.result
-    const cleanTitle = title.replace(/[^a-zA-Z0-9\s]/g, '').slice(0, 50)
-    const caption = `📹 *${title}*\n🎞️ Calidad: ${quality || "Desconocida"}\n📦 Tamaño aprox: ${size || "N/A"}`
+    const safeTitle = (title || 'video').replace(/[^\w\s]/gi, '').slice(0, 50)
 
-    // 🔄 Descargar el video como buffer
-    const resVideo = await fetch(videoUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-      }
-    })
+    const caption = `📹 *${title}*\n🎞️ Calidad: ${quality || "Desconocida"}\n📦 Tamaño aprox: ${size || "N/A"}\n\n📽️`
 
-    if (!resVideo.ok) throw new Error(`Error ${resVideo.status} al descargar el video.`)
-
-    const buffer = await resVideo.buffer()
-
-    await conn.sendMessage(m.chat, {
-      video: buffer,
-      fileName: cleanTitle + '.mp4',
+    await conn.sendFile(
+      m.chat,
+      videoUrl,
+      safeTitle + ".mp4",
       caption,
-      mimetype: 'video/mp4'
-    }, { quoted: m })
+      m,
+      false,
+      {
+        mimetype: 'video/mp4',
+        asDocument: false
+      }
+    )
 
     await m.react("✅")
     console.log("✅ Video enviado correctamente")
