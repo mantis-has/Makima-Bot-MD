@@ -12,13 +12,23 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
 
     if (!video) return m.reply('❌ No encontré ningún video con ese nombre')
 
-    // Aquí usamos la URL corta tipo https://youtu.be/VIDEOID para evitar rollos con la API
     const cleanUrl = `https://youtu.be/${video.videoId}`
 
     const api = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(cleanUrl)}`
 
     const res = await fetch(api)
-    const json = await res.json()
+    const textResponse = await res.text()
+
+    // Aquí imprimimos para ver qué está llegando
+    console.log('[play2 API response]', textResponse)
+
+    // Intentamos parsear, si falla ahí está el error
+    let json
+    try {
+      json = JSON.parse(textResponse)
+    } catch (err) {
+      return m.reply(`❌ La API no devolvió JSON válido:\n\n${textResponse}`)
+    }
 
     if (json?.status !== 200 || !json?.result) {
       return m.reply(`❌ Error al procesar el video\n${json?.mensaje || 'Prueba con otro nombre'}`)
