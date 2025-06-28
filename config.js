@@ -16,8 +16,8 @@ global.baileys = 'V 6.7.16'
 global.vs = '2.2.0'
 global.nameqr = 'MAKIMA-BOT-MD'
 global.namebot = 'Makima Bot MD'
-global.sessions = 'MakiSessions'
-global.jadi = 'MakiJadiBots' 
+global.sessions = 'Sessions'
+global.jadi = 'JadiBots' 
 global.yukiJadibts = true
 
 global.packname = 'MakimaBot'
