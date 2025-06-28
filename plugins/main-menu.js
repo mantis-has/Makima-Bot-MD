@@ -16,23 +16,23 @@ const tags = {
 
 const defaultMenu = {
   before: `
-𝐇𝐨𝐥𝐚 @%taguser 𝐒𝐨𝐲 *%botname*
+𝐇𝐨𝐥𝐚 @%taguser 𝐒𝐨𝐲 %botname
 
 ╭⬣「 ✰𝐈𝐧𝐟𝐨-𝐁𝐨𝐭✰ 」⬣
-│⁖ฺ۟̇࣪·֗Creador: *Félix*
-│⁖ฺ۟̇࣪·֗Actividad: *%uptime*
-│⁖ฺ۟̇࣪·֗Registros: *%totalreg*
-│⁖ฺ۟̇࣪·֗Comandos: *%totalcomand*
+│⁖ฺ۟̇࣪·֗Creador: Félix
+│⁖ฺ۟̇࣪·֗Actividad: %uptime
+│⁖ฺ۟̇࣪·֗Registros: %totalreg
+│⁖ฺ۟̇࣪·֗Comandos: %totalcomand
 ╰─⬣
 
 ╭⬣「 ✰𝐈𝐧𝐟𝐨-𝐔𝐬𝐞𝐫✰ 」⬣
-│⁖ฺ۟̇࣪·֗Nombre: *%name*
-│⁖ฺ۟̇࣪·֗Rango: *%role*
-│⁖ฺ۟̇࣪·֗Nivel: *%level*
+│⁖ฺ۟̇࣪·֗Nombre: %name
+│⁖ฺ۟̇࣪·֗Rango: %role
+│⁖ฺ۟̇࣪·֗Nivel: %level
 ╰─⬣
 `.trimStart(),
   header: '╭⬣「 ✰%category✰ 」⬣',
-  body: '│⁖ฺ۟̇࣪·֗٬̤⃟🩵 *%cmd* %islimit %isPremium',
+  body: '│⁖ฺ۟̇࣪·֗٬̤⃟🩵 %cmd %islimit %isPremium',
   footer: '╰─⬣\n',
   after: '> Ⓒ︎ 𝑃ᴏ𝗐𝖾𝗋𝖾𝖽 𝐵ʏ 𝙵𝚎𝚕𝚒𝚡\n%readmore'.trimStart()
 }
@@ -135,13 +135,21 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const isURL = typeof bannerFinal === 'string' && /^https?:\/\//i.test(bannerFinal)
     const imageContent = isURL ? { image: { url: bannerFinal } } : { image: fs.readFileSync(bannerFinal) }
 
+    const rcanal = {
+      contextInfo: {
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: idcanal,
+          serverMessageId: 100,
+          newsletterName: namecanal
+        }
+      }
+    }
+
     await conn.sendMessage(m.chat, {
       ...imageContent,
       caption: text.trim(),
-      contextInfo: {
-        mentionedJid: conn.parseMention(text),
-        isForwarded: true
-      }
+      ...rcanal
     }, { quoted: m })
 
   } catch (e) {
