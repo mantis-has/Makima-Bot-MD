@@ -25,8 +25,8 @@ https://theadonix-api.vercel.app
 %readmore`.trimStart(),
   header: '> ── ✧ *%category* ✧ ──',
   body: '• %cmd %islimit %isPremium\n',
-  footer: '═══════════════════════\n',
-  after: '✨ ¡Disfruta y pásala bien!\n',
+  footer: '\n',
+  after: '> ➮ 𝖬𝖺𝖽𝖾 𝗐𝗂𝗍𝗁 𝗪𝗶𝗿𝗸\n',
 }
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
