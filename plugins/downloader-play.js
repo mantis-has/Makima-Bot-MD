@@ -2,19 +2,21 @@ import fetch from "node-fetch"
 import yts from "yt-search"
 
 const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
-const limit = 100 // MB máx
+const limit = 100 // MB máximo permitido
 
+// Datos de tu canal
 const rcanal = {
   contextInfo: {
     isForwarded: true,
     forwardedNewsletterMessageInfo: {
-      newsletterJid: idcanal,
+      newsletterJid: idcanal, // ← Pon tu ID aquí
       serverMessageId: 100,
-      newsletterName: namecanal,
+      newsletterName: namecanal, // ← Y el nombre del canal
     }
   }
 }
 
+// Función para limpiar el nombre del archivo
 const sanitizeFilename = (name) => {
   return name
     .replace(/[\\\/:*?"<>|]/g, '')
@@ -62,9 +64,11 @@ const handler = async (m, { conn, text, command }) => {
   }
 }
 
+// 🔊 AUDIO
 const downloadAudio = async (conn, m, video, title) => {
   try {
     console.log("✦ Solicitando audio...")
+
     const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp3?query=${encodeURIComponent(video.url)}`)
     const json = await res.json()
 
@@ -92,9 +96,11 @@ const downloadAudio = async (conn, m, video, title) => {
   }
 }
 
+// 📹 VIDEO con vista previa siempre
 const downloadVideo = async (conn, m, video, title) => {
   try {
     console.log("❀ Solicitando video...")
+
     const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(video.url)}`)
     const json = await res.json()
 
@@ -122,7 +128,6 @@ const downloadVideo = async (conn, m, video, title) => {
     }
 
     const caption = `🎥 *${title}*\n✦ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño: ${size || `${sizemb.toFixed(2)} MB`}\n\n📥 Enviado por: *Yuru Yuri*`
-    const doc = sizemb >= limit && sizemb > 0
 
     await conn.sendFile(
       m.chat,
@@ -130,7 +135,10 @@ const downloadVideo = async (conn, m, video, title) => {
       safeName,
       caption,
       m,
-      { asDocument: doc, mimetype: 'video/mp4' }
+      {
+        mimetype: 'video/mp4',
+        asDocument: false // 👈 SIEMPRE COMO VIDEO CON VISTA PREVIA
+      }
     )
 
     await m.react("✅")
