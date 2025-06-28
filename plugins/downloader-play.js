@@ -2,9 +2,8 @@ import fetch from "node-fetch"
 import yts from "yt-search"
 
 const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
-const limit = 100 // MB
+const limit = 100 // MB máx
 
-// Canal de reenvío (si usás newsletters en WhatsApp)
 const rcanal = {
   contextInfo: {
     isForwarded: true,
@@ -16,6 +15,14 @@ const rcanal = {
   }
 }
 
+const sanitizeFilename = (name) => {
+  return name
+    .replace(/[\\\/:*?"<>|]/g, '')
+    .replace(/[^a-zA-Z0-9\s\-_\.]/g, '')
+    .substring(0, 64)
+    .trim()
+}
+
 const handler = async (m, { conn, text, command }) => {
   if (!text) return m.reply("> Ingresa el nombre de un video o una URL de YouTube.", null, rcanal)
 
@@ -23,39 +30,23 @@ const handler = async (m, { conn, text, command }) => {
   console.log("💎 Buscando en YouTube...")
 
   try {
-    let res = await yts(text)
+    const res = await yts(text)
+    if (!res?.all?.length) return m.reply("🌻 No se encontraron resultados para tu búsqueda.", null, rcanal)
 
-    if (!res?.all?.length) {
-      return m.reply("🌻 No se encontraron resultados para tu búsqueda.", null, rcanal)
-    }
-
-    let video = res.all[0]
+    const video = res.all[0]
     if (!video) return m.reply("❌ No se pudo obtener información del video.", null, rcanal)
 
-    let durationTimestamp = video.duration?.timestamp || "Desconocida"
-    const authorName = video.author?.name || "Desconocido"
-    const title = video.title || "Sin título"
-    const views = video.views || "Desconocidas"
-    const thumbnail = video.thumbnail || ""
+    const { title, author, duration, views, thumbnail } = video
+    const durationTimestamp = duration?.timestamp || "Desconocida"
+    const authorName = author?.name || "Desconocido"
 
-    const processingMessage = `「✦」${title}
-
-> ❀ Canal: ${authorName}
-✐ Duración: ${durationTimestamp}
-☄︎ Vistas: ${views}
-
-✿ Aguarde, unos segundos..`
+    const msg = `「✦」${title}\n\n❀ Canal: ${authorName}\n✐ Duración: ${durationTimestamp}\n☄︎ Vistas: ${views || 'N/A'}\n\n✿ Aguarde, unos segundos..`
 
     let sentMessage
-    if (thumbnail) {
-      try {
-        sentMessage = await conn.sendFile(m.chat, thumbnail, "thumb.jpg", processingMessage, m, false, rcanal)
-      } catch (thumbError) {
-        console.log("⚠ No se pudo enviar la miniatura:", thumbError.message)
-        sentMessage = await m.reply(processingMessage, null, rcanal)
-      }
-    } else {
-      sentMessage = await m.reply(processingMessage, null, rcanal)
+    try {
+      sentMessage = await conn.sendFile(m.chat, thumbnail, "thumb.jpg", msg, m, false, rcanal)
+    } catch {
+      sentMessage = await m.reply(msg, null, rcanal)
     }
 
     if (["play", "playaudio", "ytmp3"].includes(command)) {
@@ -66,35 +57,33 @@ const handler = async (m, { conn, text, command }) => {
 
   } catch (error) {
     console.error("❌ Error general:", error)
-    await m.reply(`❌ Hubo un error al procesar tu solicitud:\n\n${error.message}`, null, rcanal)
+    await m.reply(`❌ Hubo un error:\n\n${error.message}`, null, rcanal)
     await m.react("❌")
   }
 }
 
-// 🔊 Descargar Audio desde Adonix API
 const downloadAudio = async (conn, m, video, title) => {
   try {
     console.log("✦ Solicitando audio...")
-
     const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp3?query=${encodeURIComponent(video.url)}`)
     const json = await res.json()
 
-    if (!json.result?.audio) throw new Error("No se pudo obtener el enlace de descarga del audio")
+    if (!json.result?.audio) throw new Error("No se pudo obtener el audio")
 
     const { audio, filename } = json.result
+    const safeName = sanitizeFilename(filename || title) + ".mp3"
 
-    console.log("✿ Enviando audio...")
     await conn.sendFile(
       m.chat,
       audio,
-      `${(filename || title).replace(/[^\w\s]/gi, '')}.mp3`,
-      m,
+      safeName,
       null,
+      m,
       { mimetype: 'audio/mpeg', ptt: true }
     )
 
     await m.react("✅")
-    console.log("✅ Audio enviado exitosamente")
+    console.log("✅ Audio enviado con éxito")
 
   } catch (error) {
     console.error("❌ Error descargando audio:", error)
@@ -103,19 +92,18 @@ const downloadAudio = async (conn, m, video, title) => {
   }
 }
 
-// 📼 Descargar Video desde Adonix API
 const downloadVideo = async (conn, m, video, title) => {
   try {
     console.log("❀ Solicitando video...")
-
     const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(video.url)}`)
     const json = await res.json()
 
     if (json?.status !== 200 || !json.result?.video) {
-      throw new Error(json?.mensaje || "No se pudo obtener el enlace de descarga del video")
+      throw new Error(json?.mensaje || "No se pudo obtener el video")
     }
 
     const { video: videoUrl, filename, quality, size } = json.result
+    const safeName = sanitizeFilename(filename || title) + ".mp4"
 
     let sizemb = 0
     try {
@@ -133,22 +121,20 @@ const downloadVideo = async (conn, m, video, title) => {
       return m.reply(`✤ El archivo es muy pesado (${sizemb.toFixed(2)} MB). El límite es ${limit} MB.`, null, rcanal)
     }
 
+    const caption = `🎥 *${title}*\n✦ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño: ${size || `${sizemb.toFixed(2)} MB`}\n\n📥 Enviado por: *Yuru Yuri*`
     const doc = sizemb >= limit && sizemb > 0
 
-    const caption = `🎥 *${title}*\n✦ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño: ${size || sizemb.toFixed(2) + ' MB'}\n\n📥 Enviado por: *Mai*`
-
-    console.log("✧ Enviando video...")
     await conn.sendFile(
       m.chat,
       videoUrl,
-      `${(filename || title).replace(/[^\w\s]/gi, '')}.mp4`,
+      safeName,
       caption,
       m,
       { asDocument: doc, mimetype: 'video/mp4' }
     )
 
     await m.react("✅")
-    console.log("✅ Video enviado exitosamente")
+    console.log("✅ Video enviado con éxito")
 
   } catch (error) {
     console.error("❌ Error descargando video:", error)
@@ -157,7 +143,7 @@ const downloadVideo = async (conn, m, video, title) => {
   }
 }
 
-handler.command = handler.help = ['play', 'playaudio', 'ytmp3', 'play2', 'mp4']
+handler.command = handler.help = ['play', 'playaudio', 'ytmp3', 'play2', 'mp4', 'ytmp4']
 handler.tags = ['downloader']
 
 export default handler
