@@ -22,7 +22,7 @@ let handler = async (m, { text, usedPrefix, command }) => {
   }
 
   try {
-    const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp42?url=${encodeURIComponent(url)}`)
+    const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(url)}`)
     const json = await res.json()
 
     if (json.status !== 200) return m.reply(`❌ No se pudo descargar el video`)
