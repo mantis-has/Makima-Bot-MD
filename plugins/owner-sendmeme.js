@@ -9,20 +9,20 @@ const handler = async (m, { conn }) => {
       return m.reply('❌ No se pudo obtener el meme.');
     }
 
-    await conn.sendMessage('120363420941524030@newsletter', {
+    await conn.sendMessage('120363400360651198@newsletter', {
       image: { url: memeUrl },
-      caption: '> ❀ *Meme destacado*\n✧ Enviado por YuruYuri ✧',
+      caption: '「🩵」 *MEME PARA TI*\n\n> Makima Bot MD',
     });
 
-    m.reply('✅ Meme enviado al canal.');
+    m.reply('「🩵」 Meme enviado al canal con éxito...');
   } catch (e) {
     console.error(e);
     m.reply('⚠️ Hubo un error al intentar enviar el meme.');
   }
 };
 
-handler.command = ['sendmeme'];
-handler.help = ['sendmeme'];
+handler.command = ['memechannel'];
+handler.help = ['tools'];
 handler.tags = ['owner'];
 
 export default handler;
