@@ -24,7 +24,7 @@ const sanitizeFilename = (name) => {
 const handler = async (m, { conn, text, command }) => {
   if (!text) return m.reply(`📌 Usa el comando así:\n${command} Believer`, null, rcanal)
 
-  await m.react('⏳')
+  await m.react('🕒')
   console.log("🔍 Buscando video...")
 
   try {
@@ -33,7 +33,7 @@ const handler = async (m, { conn, text, command }) => {
     if (!video) return m.reply("❌ No encontré resultados", null, rcanal)
 
     const { title, timestamp, views, author, thumbnail, url } = video
-    const caption = `「📥」*${title}*\n\n🎞️ Duración: ${timestamp}\n👤 Canal: ${author.name}\n👁️ Vistas: ${views}\n\n⏳ Descargando...`
+    const caption = `「☁︎」*${title}*\n\n☄︎ Duración: ${timestamp}\n👤 Canal: ${author.name}\n✐ Vistas: ${views}\n\n✿ Descargando...`
 
     try {
       await conn.sendFile(m.chat, thumbnail, 'yt.jpg', caption, m, false, rcanal)
@@ -51,9 +51,9 @@ const handler = async (m, { conn, text, command }) => {
 
     const { video: videoUrl, title: vtitle, filename, quality, size } = json.result
 
-    const info = `🎬 *${vtitle}*\n📁 Archivo: ${filename}\n📽️ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño: ${size || 'Desconocido'}`
+    const info = `✧ *${vtitle}*`
 
-    await conn.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
+    await conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
     await conn.sendFile(m.chat, videoUrl, sanitizeFilename(filename || vtitle) + '.mp4', info, m, {
       mimetype: 'video/mp4',
       asDocument: false
