@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url'
 
 
 global.owner = [
-  ['50493732693', 'Wirk', true],
+  ['18293142989', 'CREADOR', true],
 ]
 
 
@@ -14,23 +14,23 @@ global.prems = []
 global.libreria = 'Baileys'
 global.baileys = 'V 6.7.16' 
 global.vs = '2.2.0'
-global.nameqr = 'YuriBotMD'
-global.namebot = '✿◟ʏᴜʀᴜ ʏᴜʀɪ ᴍᴅ◞✿'
-global.sessions = 'Sessions'
-global.jadi = 'JadiBots' 
+global.nameqr = 'MAKIMA-BOT-MD'
+global.namebot = 'Makima Bot MD'
+global.sessions = 'MakiSessions'
+global.jadi = 'MakiJadiBots' 
 global.yukiJadibts = true
 
-global.packname = '✦ 𝖸𝗎𝗋𝗎 𝖸𝗎𝗋𝗂 ✦'
-global.namebot = '✧ ʏᴜʀᴜ ʏᴜʀɪ ✧'
-global.author = '「☄︎」 ᴍᴀᴅᴇ ᴡɪᴛʜ 𝘄𝗶𝗿𝗸'
+global.packname = 'MakimaBot'
+global.namebot = 'Makima Bot MD'
+global.author = 'Made with Félix'
 
 
-global.namecanal = '❀ 𝖬𝖾𝗆𝖾𝗌 𝗒 𝗆𝖺́𝗌 ✧'
-global.canal = 'https://whatsapp.com/channel/0029Vb5pM031CYoMvQi2I02D'
-global.idcanal = '120363420941524030@newsletter'
+global.namecanal = 'MAKIMA - FRASES'
+global.canal = 'https://whatsapp.com/channel/0029VbAZcyIIXnlwp79iwu2l'
+global.idcanal = '120363400360651198@newsletter'
 
 global.ch = {
-ch1: '120363420941524030@newsletter',
+ch1: '120363400360651198@newsletter',
 }
 
 global.multiplier = 69 
