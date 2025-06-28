@@ -16,8 +16,12 @@ const tags = {
 
 const defaultMenu = {
   before: `
-*☄︎ ¡Hola! Soy %botname* — ¿Qué onda?
-> ❐ Aquí está el menú: 
+*☄︎ ¡Hola! Soy %botname* — 
+  ¿Qué tal?
+
+*✦ Actividad :* %uptime
+
+> ★ Aquí está el menú =
 
 *「✧」 ᴀᴅᴏɴɪx ᴀᴘɪ*
 https://theadonix-api.vercel.app
