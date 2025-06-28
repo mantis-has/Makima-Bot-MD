@@ -3,24 +3,23 @@ import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 
 const tags = {
-  serbot: '❀ Subs - Bots',
-  downloader: '❀ Downloaders',
-  tools: '❀ Tools',
-  owner: '❀ Owner',
-  info: '❀ Información',
-  group: '❀ Group',
-  search: '❀ Searchs',
-  sticker: '❀ Stickers',
-  ia: '❀ Inteligencia Artificial',
+  serbot: 'Subs - Bots',
+  downloader: 'Downloaders',
+  tools: 'Tools',
+  owner: 'Owner',
+  info: 'Información',
+  group: 'Group',
+  search: 'Searchs',
+  sticker: 'Stickers',
+  ia: 'Inteligencia Artificial',
 }
 
 const defaultMenu = {
   before: `
-*☄︎ Hola, Soy %botname* ¿ Qué tal ?
-> ❐ Aqui tienes el menu : 
+*Hola, Soy %botname*
+Lista De Comandos:
 
-*「✧」ᴀᴅᴏɴɪx ᴀᴘɪ*
-https://theadonix-api.vercel.app
+*「🩵」 NEW VERSION*
 
 %readmore`.trimStart(),
   header: '> *%category*',
@@ -55,7 +54,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     let nombreBot = global.namebot || 'Bot'
     let bannerFinal = './storage/img/menu.jpg'
 
-    // 👇 Aca se Lee si el sub bot tiene personalización 
+    // 「🩵」Aqui puedes leer si el subbot esta personalizado
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const configPath = join('./JadiBots', botActual, 'config.json')
     if (fs.existsSync(configPath)) {
@@ -64,12 +63,12 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
         if (config.name) nombreBot = config.name
         if (config.banner) bannerFinal = config.banner
       } catch (err) {
-        console.log('⚠️ No se pudo leer config del subbot:', err)
+        console.log('「🩵」 No se pudo leer config del subbot:', err)
       }
     }
 
-    const esPrincipal = botActual === '+50493059810'.replace(/\D/g, '')
-    const tipoBot = esPrincipal ? '*☁︎ Bot:* Principal 🅥' : '*☁︎ Bot:* Sub Bot 🅑'
+    const esPrincipal = botActual === '+18293142989'.replace(/\D/g, '')
+    const tipoBot = esPrincipal ? '*Bot:* OficialBot' : '*Bot:* Sub-Bot'
 
     const menuConfig = conn.menu || defaultMenu
     const _text = [
@@ -82,8 +81,8 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
             return menu.help.map(helpText => {
               return menuConfig.body
                 .replace(/%cmd/g, menu.prefix ? helpText : `${_p}${helpText}`)
-                .replace(/%islimit/g, menu.limit ? '◜⭐◞' : '')
-                .replace(/%isPremium/g, menu.premium ? '◜🪪◞' : '')
+                .replace(/%islimit/g, menu.limit ? '◜🩵◞' : '')
+                .replace(/%isPremium/g, menu.premium ? '◜🏆◞' : '')
                 .trim()
             }).join('\n')
           }).join('\n'),
