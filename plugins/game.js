@@ -1,53 +1,52 @@
-import ytSearch from 'yt-search'
 import fetch from 'node-fetch'
+import yts from 'yt-search'
 
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) return m.reply(`*🧩 Uso correcto:*\n\n${usedPrefix + command} nombre de la canción o video`)
+let handler = async (m, { conn, command, text, usedPrefix }) => {
+  if (!text) throw m.reply(`✧ Ejemplo: ${usedPrefix}${command} Waguri Edit`);
 
-  try {
-    await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
+ await conn.sendMessage(m.chat, { react: { text: '🕒', key: m.key }})
 
-    const searchResult = await ytSearch(text)
-    const video = searchResult.videos.length > 0 ? searchResult.videos[0] : null
+    let results = await yts(text);
+    let tes = results.videos[0]
 
-    if (!video) return m.reply('❌ No encontré ningún video con ese nombre')
+  const args = text.split(' ');
+  const videoUrl = args[0];
 
-    const cleanUrl = `https://youtu.be/${video.videoId}`
+  const apiUrl = `https://www.apis-anomaki.zone.id/downloader/ytv?url=${encodeURIComponent(tes.url)}`;
 
-    const api = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(cleanUrl)}`
+    const respuesta = await fetch(apiUrl);
+    const keni = await respuesta.json()
+    const { url, qualityLabel, fps } = keni.result.formats[0];
+    const { title } = keni.result;
 
-    const res = await fetch(api)
-    const textResponse = await res.text()
+    if (!url) throw m.reply('No hay respuesta de la api.');
 
-    // Aquí imprimimos para ver qué está llegando
-    console.log('[play2 API response]', textResponse)
 
-    // Intentamos parsear, si falla ahí está el error
-    let json
-    try {
-      json = JSON.parse(textResponse)
-    } catch (err) {
-      return m.reply(`❌ La API no devolvió JSON válido:\n\n${textResponse}`)
-    }
+    const caption = `
+      *💮 PLAY VIDEO 💮*
+ 
+  ✧ : \`titulo;\` ${tes.title || 'no encontrado'}
+  ✧ : \`duracion;\` ${tes.duration || 'no encontrado'}
+  ✧ : \`calidad;\` ${qualityLabel || 'no encontrado'}
+  ✧ : \`fps;\` ${fps || 'no encontrado'}
+ 
+> ${wm}
+> Pedido de @${m.sender.split('@')[0]}`;
 
-    if (json?.status !== 200 || !json?.result) {
-      return m.reply(`❌ Error al procesar el video\n${json?.mensaje || 'Prueba con otro nombre'}`)
-    }
+//await conn.sendMessage(m.chat, { document: { url: url }, caption: caption, mimetype: 'video/mp4', fileName: `${title}` + `.mp4`}, {quoted: m })
 
-    const { title, video: videoFile, filename, quality, size } = json.result
+    await conn.sendMessage(m.chat, {
+      video: { url: url },
+      mimetype: "video/mp4",
+      fileName: title,
+      caption,
+      mentions: [m.sender]
+    }, { quoted: m });
+await conn.sendMessage(m.chat, { react: { text: '✅', key: m.key }})
+};
 
-    await conn.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
-
-    await conn.sendFile(m.chat, videoFile, filename, `✧ *${title}*\n❀ Calidad: ${quality}\n✐ Tamaño aprox: ${size}`, m)
-
-  } catch (e) {
-    console.error('[play2]', e)
-    m.reply(`❌ Error al buscar o descargar\n\n${e.message}`)
-  }
-}
-
-handler.help = ['play2 <nombre>']
-handler.tags = ['downloader']
-handler.command = ['play2']
+handler.help = ['playvideo *<consulta>*'];
+handler.tags = ['descargas'];
+handler.command = /^(play2|playvid)$/i;
 
 export default handler
