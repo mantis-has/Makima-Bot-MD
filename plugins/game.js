@@ -7,6 +7,7 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
   }
 
   await m.react("🔎")
+
   let res = await yts(text)
   let video = res?.all?.[0]
 
@@ -25,7 +26,10 @@ let handler = async (m, { conn, text, command, usedPrefix }) => {
       throw new Error(json?.mensaje || "No se pudo descargar el video.")
     }
 
-    const { title, video: videoUrl, filename, quality, size } = json.result
+    let { title, video: videoUrl, filename, quality, size } = json.result
+
+    // 🧼 Sanitizar el nombre del archivo para evitar errores
+    filename = (filename || title || 'video').replace(/[\\\/:*?"<>|]/g, '').slice(0, 64) + ".mp4"
 
     const caption = `📹 *${title}*\n🎞️ Calidad: ${quality || "Desconocida"}\n📦 Tamaño aprox: ${size || "N/A"}\n\n📽️`
 
