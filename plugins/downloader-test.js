@@ -7,19 +7,19 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
     const res = await fetch(api)
     const json = await res.json()
 
-    if (json?.status !== 200) {
-      return m.reply(` Error al procesar el video\n${json?.mensaje || 'Inténtalo con otro link'}`)
+    if (json?.status !== 200 || !json?.result) {
+      return m.reply(`❌ Error al procesar el video\n${json?.mensaje || 'Inténtalo con otro link'}`)
     }
 
     const { title, video, filename, quality, size } = json.result
 
     await conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
 
-    await conn.sendFile(m.chat, video, filename, `✧ *${title}*\n❀ Calidad: ${quality}\n✐ Tamaño aprox: ${size}\n, m)
+    await conn.sendFile(m.chat, video, filename, `✧ *${title}*\n❀ Calidad: ${quality}\n✐ Tamaño aprox: ${size}`, m)
 
   } catch (e) {
     console.error('[ytmp4]', e)
-    m.reply(` Error al conectar con la API\n\n${e.message}`)
+    m.reply(`❌ Error al conectar con la API\n\n${e.message}`)
   }
 }
 
