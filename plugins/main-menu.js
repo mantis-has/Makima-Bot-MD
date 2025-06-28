@@ -16,16 +16,25 @@ const tags = {
 
 const defaultMenu = {
   before: `
-*Hola, Soy %botname*
-Lista De Comandos:
+𝐇𝐨𝐥𝐚 @%taguser 𝐒𝐨𝐲 *%botname*
 
-*「🩵」 NEW VERSION*
+╭⬣「 ✰𝐈𝐧𝐟𝐨-𝐁𝐨𝐭✰ 」⬣
+│⁖ฺ۟̇࣪·֗Creador: *Félix*
+│⁖ฺ۟̇࣪·֗Actividad: *%uptime*
+│⁖ฺ۟̇࣪·֗Registros: *%totalreg*
+│⁖ฺ۟̇࣪·֗Comandos: *%totalcomand*
+╰─⬣
 
-%readmore`.trimStart(),
-  header: '> *%category*',
-  body: '• %cmd %islimit %isPremium\n',
-  footer: '',
-  after: '',
+╭⬣「 ✰𝐈𝐧𝐟𝐨-𝐔𝐬𝐞𝐫✰ 」⬣
+│⁖ฺ۟̇࣪·֗Nombre: *%name*
+│⁖ฺ۟̇࣪·֗Rango: *%role*
+│⁖ฺ۟̇࣪·֗Nivel: *%level*
+╰─⬣
+`.trimStart(),
+  header: '╭⬣「 ✰%category✰ 」⬣',
+  body: '│⁖ฺ۟̇࣪·֗٬̤⃟🩵 *%cmd* %islimit %isPremium',
+  footer: '╰─⬣\n',
+  after: '> Ⓒ︎ 𝑃ᴏ𝗐𝖾𝗋𝖾𝖽 𝐵ʏ 𝙵𝚎𝚕𝚒𝚡\n%readmore'.trimStart()
 }
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
@@ -51,10 +60,12 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       premium: plugin.premium
     }))
 
+    const totalcomand = help.map(h => h.help.length).reduce((a, b) => a + b, 0)
+    const role = global.db.data.users[m.sender]?.role || 'Usuario'
+
     let nombreBot = global.namebot || 'Bot'
     let bannerFinal = './storage/img/menu.jpg'
 
-    // 「🩵」Aqui puedes leer si el subbot esta personalizado
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const configPath = join('./JadiBots', botActual, 'config.json')
     if (fs.existsSync(configPath)) {
@@ -96,7 +107,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       '%': '%',
       p: _p,
       botname: nombreBot,
-      taguser: '@' + m.sender.split('@')[0],
+      taguser: m.sender.split('@')[0],
       exp: exp - min,
       maxexp: xp,
       totalexp: exp,
@@ -109,6 +120,9 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       time,
       totalreg,
       rtotalreg,
+      totalcomand,
+      uptime: clockString(process.uptime() * 1000),
+      role,
       readmore: readMore,
       greeting,
     }
@@ -118,7 +132,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       (_, name) => String(replace[name])
     )
 
-    // 📤 Detecta si es URL o archivo local
     const isURL = typeof bannerFinal === 'string' && /^https?:\/\//i.test(bannerFinal)
     const imageContent = isURL ? { image: { url: bannerFinal } } : { image: fs.readFileSync(bannerFinal) }
 
