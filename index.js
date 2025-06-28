@@ -11,7 +11,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
 cfonts.say('Makima\nMakiMD', {
-  font: 'block',
+  font: 'Block',
   align: 'center',
   gradient: ['cyan', 'blue']
 })
