@@ -25,6 +25,6 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
 
 handler.help = ['ytmp42 <url>']
 handler.tags = ['downloader']
-handler.command = ['ytmp4']
+handler.command = ['ytmp42']
 
 export default handler
