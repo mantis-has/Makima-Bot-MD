@@ -4,19 +4,19 @@ import yts from "yt-search"
 const youtubeRegexID = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([a-zA-Z0-9_-]{11})/
 const limit = 100 // MB máximo permitido
 
-// Datos de tu canal
+// Datos de tu canal, cambia estos valores a lo que uses
 const rcanal = {
   contextInfo: {
     isForwarded: true,
     forwardedNewsletterMessageInfo: {
-      newsletterJid: idcanal, // ← Pon tu ID aquí
+      newsletterJid: idcanal, // reemplaza acá
       serverMessageId: 100,
-      newsletterName: namecanal, // ← Y el nombre del canal
+      newsletterName: namecanal, // reemplaza acá
     }
   }
 }
 
-// Función para limpiar el nombre del archivo
+// Limpia nombre para archivo
 const sanitizeFilename = (name) => {
   return name
     .replace(/[\\\/:*?"<>|]/g, '')
@@ -26,7 +26,7 @@ const sanitizeFilename = (name) => {
 }
 
 const handler = async (m, { conn, text, command }) => {
-  if (!text) return m.reply("> Ingresa el nombre de un video o una URL de YouTube.", null, rcanal)
+  if (!text) return m.reply(`*🌐 Ejemplo de uso:*\n\n${command} https://youtu.be/aBfUFr9SBY0`, null, rcanal)
 
   await m.react("🕒")
   console.log("💎 Buscando en YouTube...")
@@ -44,11 +44,10 @@ const handler = async (m, { conn, text, command }) => {
 
     const msg = `「✦」${title}\n\n❀ Canal: ${authorName}\n✐ Duración: ${durationTimestamp}\n☄︎ Vistas: ${views || 'N/A'}\n\n✿ Aguarde, unos segundos..`
 
-    let sentMessage
     try {
-      sentMessage = await conn.sendFile(m.chat, thumbnail, "thumb.jpg", msg, m, false, rcanal)
+      await conn.sendFile(m.chat, thumbnail, "thumb.jpg", msg, m, false, rcanal)
     } catch {
-      sentMessage = await m.reply(msg, null, rcanal)
+      await m.reply(msg, null, rcanal)
     }
 
     if (["play", "playaudio", "ytmp3"].includes(command)) {
@@ -64,7 +63,7 @@ const handler = async (m, { conn, text, command }) => {
   }
 }
 
-// 🔊 AUDIO
+// AUDIO con ytmp3 API
 const downloadAudio = async (conn, m, video, title) => {
   try {
     console.log("✦ Solicitando audio...")
@@ -96,50 +95,28 @@ const downloadAudio = async (conn, m, video, title) => {
   }
 }
 
-// 📹 VIDEO con vista previa siempre
+// VIDEO con ytmp42 API y preview normal
 const downloadVideo = async (conn, m, video, title) => {
   try {
-    console.log("❀ Solicitando video...")
+    const api = `https://theadonix-api.vercel.app/api/ytmp42?url=${encodeURIComponent(video.url)}`
 
-    const res = await fetch(`https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(video.url)}`)
+    const res = await fetch(api)
     const json = await res.json()
 
-    if (json?.status !== 200 || !json.result?.video) {
-      throw new Error(json?.mensaje || "No se pudo obtener el video")
+    if (json?.status !== 200) {
+      throw new Error(json?.mensaje || 'No se pudo obtener el video')
     }
 
-    const { video: videoUrl, filename, quality, size } = json.result
-    const safeName = sanitizeFilename(filename || title) + ".mp4"
+    const { title: videoTitle, video: videoUrl, filename, quality, size } = json.result
 
-    let sizemb = 0
-    try {
-      const head = await fetch(videoUrl, { method: 'HEAD' })
-      const sizeHeader = head.headers.get('content-length')
-      if (sizeHeader) {
-        const bytes = parseInt(sizeHeader)
-        sizemb = bytes / (1024 * 1024)
-      }
-    } catch (e) {
-      console.log("⚠ No se pudo obtener el tamaño del archivo:", e.message)
-    }
+    await conn.sendMessage(m.chat, { react: { text: '📥', key: m.key } })
 
-    if (sizemb > limit && sizemb > 0) {
-      return m.reply(`✤ El archivo es muy pesado (${sizemb.toFixed(2)} MB). El límite es ${limit} MB.`, null, rcanal)
-    }
+    const caption = `📹 *${videoTitle}*\n🎞️ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño aprox: ${size || 'Desconocido'}\n\n📽️`
 
-    const caption = `🎥 *${title}*\n✦ Calidad: ${quality || 'Desconocida'}\n📦 Tamaño: ${size || `${sizemb.toFixed(2)} MB`}\n\n📥 Enviado por: *Yuru Yuri*`
-
-    await conn.sendFile(
-      m.chat,
-      videoUrl,
-      safeName,
-      caption,
-      m,
-      {
-        mimetype: 'video/mp4',
-        asDocument: false // 👈 SIEMPRE COMO VIDEO CON VISTA PREVIA
-      }
-    )
+    await conn.sendFile(m.chat, videoUrl, filename, caption, m, {
+      mimetype: 'video/mp4',
+      asDocument: false
+    })
 
     await m.react("✅")
     console.log("✅ Video enviado con éxito")
