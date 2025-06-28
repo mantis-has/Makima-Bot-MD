@@ -30,8 +30,8 @@ ${usedPrefix + command} baile divertido
     for (let i = 0; i < Math.min(results.length, 15); i++) {
       const video = results[i]
       txt += `
-*${i + 1}.* 🎬 ${video.title || 'Sin título'}
-🔗 ${video.url}
+*${i + 1}.* ✧ ${video.title || 'Sin título'}
+❀ ${video.url}
 ─────────────────────
 `
     }
