@@ -260,7 +260,7 @@ ${jugadoresText}`;
 };
 
 handler.help = ['soccer', 'rcjugador', 'jugadores', 'rgjugador', 'vtjugador', 'vrjugador'];
-handler.tags = ['games'];
+handler.tags = ['tools'];
 handler.command = ['soccer', 'rcjugador', 'jugadores', 'rgjugador', 'vtjugador', 'vrjugador'];
 handler.register = true;
 export default handler;
