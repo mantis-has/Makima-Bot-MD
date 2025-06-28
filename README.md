@@ -1,6 +1,6 @@
 **MAKIMA BOT 🏆**
 
-El proyecto lo comenzamos desde 0 asi que hay que ser pacientes.
+El proyecto esta en proceso asi que hay que ser pacientes.
 
 # Owner
 
