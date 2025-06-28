@@ -3,15 +3,15 @@ import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 
 const tags = {
-  serbot: 'Subs - Bots',
-  downloader: 'Downloaders',
-  tools: 'Tools',
-  owner: 'Owner',
-  info: 'Información',
-  group: 'Group',
-  search: 'Searchs',
-  sticker: 'Stickers',
-  ia: 'Inteligencia Artificial',
+  serbot: '𝐒𝐮𝐛-𝐁𝐨𝐭𝐬',
+  downloader: '𝐃𝐞𝐬𝐜𝐚𝐫𝐠𝐚𝐬',
+  tools: '𝐓𝐨𝐨𝐥𝐬',
+  owner: '𝐎𝐰𝐧𝐞𝐫',
+  info: '𝐈𝐦𝐟𝐨𝐫𝐦𝐚𝐜𝐢𝐨́𝐧',
+  group: '𝐆𝐫𝐮𝐩𝐨𝐬',
+  search: '𝐒𝐞𝐚𝐫𝐜𝐡𝐬',
+  sticker: '𝐒𝐭𝐢𝐜𝐤𝐞𝐫𝐬',
+  ia: '𝐈 - 𝐀',
 }
 
 const defaultMenu = {
