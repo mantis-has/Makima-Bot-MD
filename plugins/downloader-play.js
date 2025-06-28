@@ -128,7 +128,7 @@ const downloadVideo = async (conn, m, video, title) => {
   }
 }
 
-handler.command = handler.help = ['play', 'playaudio', 'ytmp3', 'play2', 'mp4', 'ytmp4']
+handler.command = handler.help = ['play', 'playaudio', 'ytmp3']
 handler.tags = ['downloader']
 
 export default handler
