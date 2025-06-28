@@ -15,7 +15,7 @@ let handler = async (m, { conn, args, text, usedPrefix, command }) => {
 
     await conn.sendMessage(m.chat, { react: { text: '🕐', key: m.key } })
 
-    await conn.sendFile(m.chat, video, filename, `✧ *${title}*\n❀ Calidad: ${quality}\n📦 Tamaño aprox: ${size}\n\n📽❒, m)
+    await conn.sendFile(m.chat, video, filename, `✧ *${title}*\n❀ Calidad: ${quality}\n✐ Tamaño aprox: ${size}\n, m)
 
   } catch (e) {
     console.error('[ytmp4]', e)
