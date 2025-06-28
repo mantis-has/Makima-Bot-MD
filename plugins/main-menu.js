@@ -2,6 +2,7 @@ import fs from 'fs'
 import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 
+
 const tags = {
   serbot: '✿ Subs - Bots',
   downloader: '✿ Downloaders',
@@ -115,6 +116,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       rtotalreg,
       readmore: readMore,
       greeting,
+      uptime: clockString(process.uptime() * 1000),
     }
 
     const text = _text.replace(
@@ -125,7 +127,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const isURL = typeof bannerFinal === 'string' && /^https?:\/\//i.test(bannerFinal)
     const imageContent = isURL ? { image: { url: bannerFinal } } : { image: fs.readFileSync(bannerFinal) }
 
-    // Aquí tu rcanal, cambiale si querés las vars idcanal y namecanal antes
     const rcanal = {
       contextInfo: {
         isForwarded: true,
