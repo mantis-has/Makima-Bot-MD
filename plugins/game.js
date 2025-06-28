@@ -33,7 +33,7 @@ const handler = async (m, { conn, text, command }) => {
     if (!video) return m.reply("❌ No encontré resultados", null, rcanal)
 
     const { title, timestamp, views, author, thumbnail, url } = video
-    const caption = `「☁︎」*${title}*\n\n☄︎ Duración: ${timestamp}\n👤 Canal: ${author.name}\n✐ Vistas: ${views}\n\n✿ Descargando...`
+    const caption = `「☁︎」 *${title}*\n\n☄︎ Duración: ${timestamp}\n➩ Canal: ${author.name}\n✐ Vistas: ${views}\n\n✿ Descargando...`
 
     try {
       await conn.sendFile(m.chat, thumbnail, 'yt.jpg', caption, m, false, rcanal)
@@ -69,7 +69,7 @@ const handler = async (m, { conn, text, command }) => {
   }
 }
 
-handler.command = handler.help = ['play2', 'mp4', 'ytv', 'ytmp4']
+handler.command = handler.help = ['play2', 'mp4', 'ytv']
 handler.tags = ['downloader']
 
 export default handler
