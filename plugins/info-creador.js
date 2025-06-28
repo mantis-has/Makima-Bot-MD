@@ -1,45 +1,60 @@
 let handler = async (m, { conn }) => {
-  let name = 'Ado 💻'
-  let number = '50493732693' // sin @ ni nada
+  // Reacciona con 💎
+  if (conn.sendMessage) {
+    await conn.sendMessage(m.chat, { react: { text: '💎', key: m.key }});
+  }
 
-  // Crear vCard de contacto
-  let vcard = `
-BEGIN:VCARD
+  // Datos de los contactos
+  let numberCreator = '18293142989' // Número de la creadora
+  let nombreCreator = '💎 C R E A D O R 💎'
+  let canal = 'https://wa.me18293142989'
+
+  let numberBot = '527222518356' // Número del bot
+  let nombreBot = 'BOT OFICIAL'
+
+  let numberYoSoyYo = '50670294650'
+  let nombreYoSoyYo = 'CREADORA'
+
+  // vCards individuales
+  let vcardCreator = `BEGIN:VCARD
 VERSION:3.0
-N:${name}
-FN:${name}
-TEL;type=CELL;type=VOICE;waid=${number}:${number}
-END:VCARD
-`.trim()
+N:${nombreCreator}
+FN:${nombreCreator}
+TEL;waid=${numberCreator}:${numberCreator}
+END:VCARD`
 
-  // Enviar contacto como tarjeta
+  let vcardBot = `BEGIN:VCARD
+VERSION:3.0
+N:${nombreBot}
+FN:${nombreBot}
+TEL;waid=${numberBot}:${numberBot}
+END:VCARD`
+
+  let vcardYoSoyYo = `BEGIN:VCARD
+VERSION:3.0
+N:${nombreYoSoyYo}
+FN:${nombreYoSoyYo}
+TEL;waid=${numberYoSoyYo}:${numberYoSoyYo}
+END:VCARD`
+
+  // Envía el canal como texto
+  await conn.sendMessage(m.chat, { text: `🩵 AQUI ESTA EL NUMERO DE MI CREADOR Y MI CREADORA` }, { quoted: m })
+
+  // Envía la tarjeta de contacto con los tres contactos
   await conn.sendMessage(m.chat, {
     contacts: {
-      displayName: name,
+      displayName: 'Contactos Importantes',
       contacts: [
-        {
-          vcard,
-        },
-      ],
-    },
-  }, { quoted: m })
-
-  // Enviar mensaje adicional elegante
-  await conn.sendMessage(m.chat, {
-    text: `
-━━ 👑 *Creador de la Bot* 👑 ━━
-
-📛 *Nombre:* ${name}
-📞 *Número:* wa.me/${number}
-🛠️ *Proyecto:* Bot de WhatsApp desde 0
-
-📬 Puedes escribirle si necesitas ayuda o soporte técnico.
-`.trim()
+        { vcard: vcardCreator },
+        { vcard: vcardBot },
+        { vcard: vcardYoSoyYo }
+      ]
+    }
   }, { quoted: m })
 }
 
-handler.help = ['creador']
-handler.tags = ['info']
-handler.command = ['creador', 'owner', 'creator']
+handler.help = ['owner']
+handler.tags = ['main']
+handler.command = ['owner', 'creatora', 'creadora', 'dueña']
 
 export default handler
