@@ -3,30 +3,30 @@ import { join } from 'path'
 import { xpRange } from '../lib/levelling.js'
 
 const tags = {
-  serbot: '❀ Subs - Bots',
-  downloader: '❀ Downloaders',
-  tools: '❀ Tools',
-  owner: '❀ Owner',
-  info: '❀ Información',
-  group: '❀ Group',
-  search: '❀ Searchs',
-  sticker: '❀ Stickers',
-  ia: '❀ Inteligencia Artificial',
+  serbot: '✿ Subs - Bots',
+  downloader: '✿ Downloaders',
+  tools: '✿ Tools',
+  owner: '✿ Owner',
+  info: '✿ Información',
+  group: '✿ Group',
+  search: '✿ Searchs',
+  sticker: '✿ Stickers',
+  ia: '✿ Inteligencia Artificial',
 }
 
 const defaultMenu = {
   before: `
-*☄︎ Hola, Soy %botname* ¿ Qué tal ?
-> ❐ Aqui tienes el menu : 
+*☄︎ ¡Hola! Soy %botname* — ¿Qué onda?
+> ❐ Aquí está tu menú fresh: 
 
-*「✧」ᴀᴅᴏɴɪx ᴀᴘɪ*
+*「✧」 ᴀᴅᴏɴɪx ᴀᴘɪ*
 https://theadonix-api.vercel.app
 
 %readmore`.trimStart(),
-  header: '> *%category*',
+  header: '> ── ✧ *%category* ✧ ──',
   body: '• %cmd %islimit %isPremium\n',
-  footer: '',
-  after: '',
+  footer: '═══════════════════════\n',
+  after: '✨ ¡Disfruta y pásala bien!\n',
 }
 
 const handler = async (m, { conn, usedPrefix: _p }) => {
@@ -44,7 +44,7 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     const totalreg = Object.keys(global.db.data.users).length
     const rtotalreg = Object.values(global.db.data.users).filter(user => user.registered).length
 
-    const help = Object.values(global.plugins).filter(plugin => !plugin.disabled).map(plugin => ({
+    const help = Object.values(global.plugins).filter(p => !p.disabled).map(plugin => ({
       help: Array.isArray(plugin.help) ? plugin.help : [plugin.help],
       tags: Array.isArray(plugin.tags) ? plugin.tags : [plugin.tags],
       prefix: 'customPrefix' in plugin,
@@ -55,7 +55,6 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
     let nombreBot = global.namebot || 'Bot'
     let bannerFinal = './storage/img/menu.jpg'
 
-    // 👇 Aca se Lee si el sub bot tiene personalización 
     const botActual = conn.user?.jid?.split('@')[0].replace(/\D/g, '')
     const configPath = join('./JadiBots', botActual, 'config.json')
     if (fs.existsSync(configPath)) {
@@ -119,17 +118,26 @@ const handler = async (m, { conn, usedPrefix: _p }) => {
       (_, name) => String(replace[name])
     )
 
-    // 📤 Detecta si es URL o archivo local
     const isURL = typeof bannerFinal === 'string' && /^https?:\/\//i.test(bannerFinal)
     const imageContent = isURL ? { image: { url: bannerFinal } } : { image: fs.readFileSync(bannerFinal) }
+
+    // Aquí tu rcanal, cambiale si querés las vars idcanal y namecanal antes
+    const rcanal = {
+      contextInfo: {
+        isForwarded: true,
+        forwardedNewsletterMessageInfo: {
+          newsletterJid: idcanal,
+          serverMessageId: 100,
+          newsletterName: namecanal
+        }
+      }
+    }
 
     await conn.sendMessage(m.chat, {
       ...imageContent,
       caption: text.trim(),
-      contextInfo: {
-        mentionedJid: conn.parseMention(text),
-        isForwarded: true
-      }
+      mentionedJid: conn.parseMention(text),
+      ...rcanal
     }, { quoted: m })
 
   } catch (e) {
