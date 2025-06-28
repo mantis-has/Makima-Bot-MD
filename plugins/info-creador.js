@@ -12,8 +12,8 @@ let handler = async (m, { conn }) => {
   let numberBot = '527222518356' // Número del bot
   let nombreBot = 'BOT OFICIAL'
 
-  let numberYoSoyYo = '50670294650'
-  let nombreYoSoyYo = 'CREADORA'
+  let numberCreatora = '50670294650'
+  let nombreCreatora = '🩵 CREADORA 🩵'
 
   // vCards individuales
   let vcardCreator = `BEGIN:VCARD
@@ -30,7 +30,7 @@ FN:${nombreBot}
 TEL;waid=${numberBot}:${numberBot}
 END:VCARD`
 
-  let vcardYoSoyYo = `BEGIN:VCARD
+  let vcardCreatora = `BEGIN:VCARD
 VERSION:3.0
 N:${nombreCreatora}
 FN:${nombreCreatora}
