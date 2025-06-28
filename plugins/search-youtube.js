@@ -1,36 +1,54 @@
 import axios from 'axios'
+import fs from 'fs'
 
-let handler = async (m, { conn, usedPrefix, command, text, args }) => {
-  if (!text) return conn.reply(m.chat, `𖧊 Hola, necesito que me proporciones el nombre del video *Youtube* que deseas Buscar.`, m, rcanal)
+let handler = async (m, { conn, usedPrefix, text, command }) => {
+  if (!text) return conn.reply(m.chat, `
+✲ Hola, por favor proporciona el nombre del video de YouTube que deseas buscar. ✥
 
-  await m.react('🕓')
-  let img = `./storage/img/menu.jpg`
+Ejemplo:
+${usedPrefix + command} canción relajante
+`.trim(), m, rcanal)
+
+  await m.react('🕒')
+
+  const imgPath = './storage/img/menu.jpg'
 
   try {
-    // Usamos una API de búsqueda de YouTube (puedes cambiarla si tienes otra)
-    const { data } = await axios.get(`https://api.starlights.uk/api/search/youtube?q=q=${encodeURIComponent(text)}`)
-
+    const { data } = await axios.get(`https://api.starlights.uk/api/search/youtube?q=${encodeURIComponent(text)}`)
     const results = data?.result || []
 
-    if (results.length > 0) {
-      let txt = `「 *• Searchs* 」`
-
-      for (let i = 0; i < (results.length >= 15 ? 15 : results.length); i++) {
-        const video = results[i]
-        txt += `\n\n`
-        txt += `*◦Nro →* ${i + 1}\n`
-        txt += `*◦Título →* ${video.title || 'Sin título'}\n`
-        txt += `*◦Duración →* ${video.duration || 'Desconocida'}\n`
-        txt += `*◦Canal →* ${video.uploader || 'Desconocido'}\n`
-        txt += `*◦Url →* ${video.link}`
-      }
-
-      await conn.sendFile(m.chat, img, 'youtube-thumbnail.jpg', txt, m, null, rcanal)
-      await m.react('✅')
-    } else {
-      await conn.react('✖️')
+    if (!results.length) {
+      await conn.reply(m.chat, '❁ No encontré resultados para esa búsqueda, intenta con otro término.', m, rcanal)
+      await m.react('✖️')
+      return
     }
-  } catch {
+
+    let textMsg = `✸ ✢ ✹ *Resultados de búsqueda para:* ✥ ${text} ✹ ✢ ✸\n\n`
+
+    results.slice(0, 15).forEach((video, i) => {
+      textMsg += `❀ *${i + 1}.* ❁ ${video.title || 'Sin título'}\n`
+      textMsg += `✥ Duración: ${video.duration || 'Desconocida'}\n`
+      textMsg += `✢ Canal: ${video.uploader || 'Desconocido'}\n`
+      textMsg += `✲ URL: ${video.link}\n\n`
+    })
+
+    textMsg += `> ❀ Results By YuruYuri\n`
+
+    const isUrl = /^https?:\/\//.test(imgPath)
+    const messagePayload = isUrl ? { image: { url: imgPath } } : { image: fs.readFileSync(imgPath) }
+
+    await conn.sendMessage(m.chat, {
+      ...messagePayload,
+      caption: textMsg.trim(),
+      mentionedJid: conn.parseMention(textMsg),
+      ...rcanal
+    }, { quoted: m })
+
+    await m.react('✅')
+
+  } catch (e) {
+    console.error(e)
+    await conn.reply(m.chat, '✢ Hubo un error buscando en YouTube, intenta nuevamente más tarde.', m, rcanal)
     await m.react('✖️')
   }
 }
