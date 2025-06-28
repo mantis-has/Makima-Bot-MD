@@ -17,7 +17,7 @@ const tags = {
 const defaultMenu = {
   before: `
 *☄︎ ¡Hola! Soy %botname* — ¿Qué onda?
-> ❐ Aquí está tu menú fresh: 
+> ❐ Aquí está el menú: 
 
 *「✧」 ᴀᴅᴏɴɪx ᴀᴘɪ*
 https://theadonix-api.vercel.app
