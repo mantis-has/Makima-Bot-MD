@@ -1,4 +1,4 @@
-console.log(' Yuru Yuri...')
+console.log(' Makima Bot...')
 
 import { join, dirname } from 'path'
 import { createRequire } from 'module'
@@ -10,7 +10,7 @@ import cfonts from 'cfonts'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const require = createRequire(__dirname)
 
-cfonts.say('Yuru\nYuriMD', {
+cfonts.say('Makima\nMakiMD', {
   font: 'block',
   align: 'center',
   gradient: ['cyan', 'blue']
