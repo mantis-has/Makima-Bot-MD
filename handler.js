@@ -403,15 +403,15 @@ export async function handler(chatUpdate) {
 
 global.dfail = (type, m, conn, usedPrefix) => {
     let msg = {
-        rowner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de la Bot.`,
-        owner: `✤ Hola, este comando solo puede ser utilizado por el *Creador* de la Bot y *Sub Bots*.`,
-        mods: `✤ Hola, este comando solo puede ser utilizado por los *Moderadores* de la Bot.`,
-        premium: `✤ Hola, este comando solo puede ser utilizado por Usuarios *Premium*.`,
-        group: `✤ Hola, este comando solo puede ser utilizado en *Grupos*.`,
-        private: `✤ Hola, este comando solo puede ser utilizado en mi Chat *Privado*.`,
-        admin: `✤ Hola, este comando solo puede ser utilizado por los *Administradores* del Grupo.`,
-        botAdmin: `✤ Hola, la bot debe ser *Administradora* para ejecutar este Comando.`,
-        unreg: `✤ Hola, para usar este comando debes estar *Registrado.*`,
+        rowner: `「🩵」Este comando solo puede ser usado por mi creador.`,
+        owner: `「🩵」Este comando solo puede ser usado por mi creador o Subbots.`,
+        mods: `「🩵」Este comando solo puede ser usado por mi creador.`,
+        premium: `「🩵」Este Comando solo puede ser usado por Usuarios Premium.`,
+        group: `「🩵」Este Comando solo puede ser usado en grupos.`,
+        private: `「🩵」Este Comando solo puede ser usado en chats privados.`,
+        admin: `「🩵」Este Comando solo puede ser usado por Admins.`,
+        botAdmin: `「🩵」Para usar este comando, debo ser admin del grupo.`,
+        unreg: `「🩵」Este comando solo puede ser usado por usuarios registrados\n\nRegistrate: /Reg Nombre.edad\n\nEjemplo: /Reg Maki.28`,
         restrict: `✤ Hola, esta característica está *deshabilitada.*`  
     }[type]
     if (msg) return conn.reply(m.chat, msg, m, rcanal).then(_ => m.react('✖️'))
