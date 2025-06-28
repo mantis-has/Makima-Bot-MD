@@ -1,3 +1,4 @@
+import ytSearch from 'yt-search'
 import fetch from 'node-fetch'
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
@@ -6,25 +7,21 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
   try {
     await conn.sendMessage(m.chat, { react: { text: '🔍', key: m.key } })
 
-    // Buscar con API de Delirius (suponiendo endpoint que recibe ?q=)
-    const searchRes = await fetch(`https://api-delirius.vercel.app/api/ytsearch?q=${encodeURIComponent(text)}`)
-    const searchJson = await searchRes.json()
+    // Buscar con yt-search local
+    const searchResult = await ytSearch(text)
+    const video = searchResult.videos.length > 0 ? searchResult.videos[0] : null
 
-    if (!searchJson?.result || searchJson.result.length === 0) {
-      return m.reply('❌ No encontré nada con ese nombre, prueba con otro.')
-    }
+    if (!video) return m.reply('❌ No encontré ningún video con ese nombre')
 
-    // Tomar el primer resultado
-    const video = searchJson.result[0]
-    const videoUrl = video.url || video.link || `https://youtu.be/${video.videoId}`
+    // Descargar con tu API
+    const videoUrl = video.url
 
-    // Descargar video con tu API
     const apiURL = `https://theadonix-api.vercel.app/api/ytmp4?url=${encodeURIComponent(videoUrl)}`
     const apiRes = await fetch(apiURL)
     const apiJson = await apiRes.json()
 
     if (apiJson?.status !== 200 || !apiJson?.result) {
-      return m.reply(`❌ Error al procesar el video\n${apiJson?.mensaje || 'Intenta con otro nombre'}`)
+      return m.reply(`❌ Error al procesar el video\n${apiJson?.mensaje || 'Prueba con otro nombre'}`)
     }
 
     const { title, video: videoFile, filename, quality, size } = apiJson.result
