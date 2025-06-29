@@ -1,7 +1,7 @@
 {
   "name": "YuruYuri-MD",
   "version": "1.0.0",
-  "description": "Yuru Yuri Multi Device Desde 0",
+  "description": "Yuru Yuri Multi Device",
   "main": "index.js",
   "type": "module",
   "directories": {
@@ -27,7 +27,6 @@
   "dependencies": {
     "@bochilteam/scraper": "^4.2.4",
     "@hapi/boom": "^10.0.1",
-    "@Im-Ado/AdonixScraper": "github/Im-Ado/AdonixScraper",
     "@LOVELLOUD/Scraper": "github:LOVELLOUD/LOVELLOUD-Scraper",
     "@StarlightsTeam/Scraper": "github:Ado926/Starlights-Scraper",
     "@whiskeysockets/baileys": "github:Im-Ado/md",
