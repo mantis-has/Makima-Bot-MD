@@ -38,3 +38,4 @@ let buttonMessage = {
 await conn.sendMessage(m.chat, buttonMessage, { quoted: m })
 
 handler.command = ['grupo']
+export default handler
