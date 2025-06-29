@@ -1,0 +1,26 @@
+name: 🔧 Auto Setup & Start YuruYuri Bot
+
+on:
+  push:
+    branches: [ "main" ]  # se activa cuando subís algo a la rama "main"
+  workflow_dispatch:       # también se puede ejecutar manual desde GitHub
+
+jobs:
+  setup-and-start:
+    name: 🚀 Install & Run Bot
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Cloning Repository
+        uses: actions/checkout@v3
+
+      - name: 🟨 Setting up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Cambiá si usás otra versión
+
+      - name: 📦 Installing Dependencies
+        run: npm install
+
+      - name: ▶️ Starting YuruYuri Bot
+        run: npm start
