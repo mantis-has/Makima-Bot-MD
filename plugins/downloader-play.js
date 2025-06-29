@@ -22,17 +22,17 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
       await m.reply(txt);
     }
 
-    // Ahora la descarga del audio
+    // Llamada a la API de descarga
     let api2 = await (await fetch(`https://theadonix-api.vercel.app/api/ytmp3?url=${encodeURIComponent(results.url)}`)).json();
 
-    if (!api2.result || !api2.result.download || !api2.result.download.url) {
+    if (!api2.result || !api2.result.audio) {
       return m.reply('❌ No se pudo obtener el audio del video.');
     }
 
     await conn.sendMessage(m.chat, {
-      document: { url: api2.result.download.url },
+      document: { url: api2.result.audio },
       mimetype: 'audio/mpeg',
-      fileName: `${results.title}.mp3`
+      fileName: api2.result.filename || `${results.title}.mp3`
     }, { quoted: m });
 
   } catch (e) {
@@ -42,5 +42,4 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
 };
 
 handler.command = ['play'];
-
 export default handler;
