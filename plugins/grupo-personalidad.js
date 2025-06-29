@@ -18,13 +18,13 @@ let handler = async (m, { conn, command, text }) => {
 ✵ \`Género\`       : ${pickRandom(['Hombre', 'Mujer', 'Homosexual', 'Bisexual', 'Pansexual', 'Feminista', 'Heterosexual', 'Macho alfa', 'Mujerzona', 'Marimacha', 'Palosexual', 'PlayStationSexual', 'Sr. Manuela', 'Pollosexual'])}
 `.trim()
 
-  conn.reply(m.chat, personalidad, m)
+  conn.reply(m.chat, personalidad, m, rcanal)
 }
 
 handler.help = ['personalidad']
 handler.tags = ['fun']
 handler.command = ['personalidad']
-handler.group = true
+handler.group = false
 
 export default handler
 
