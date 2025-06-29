@@ -1,7 +1,7 @@
 
 
 <h1 align="center">
-  🌸✨ Commands of YuruYuri ✨🌸
+  🌸 Commands of YuruYuri 🌸
 </h1>
 
 <p align="center">
@@ -18,11 +18,11 @@
 ---
 
 <p align="center">
-  🎀 <b>More coming soon... Stay tuned!</b> 🎀
+  🎀 <b>More coming soon... Stay tuned</b> 🎀
 </p>
 
 ---
 
 <p align="center">
-  Made with 🩷 by <b>@YourName</b>
+  Made with 🩷 by <b>Ado</b>
 </p>
