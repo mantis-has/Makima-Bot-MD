@@ -19,19 +19,19 @@ let handler = async (m, { conn }) => {
 
   let totalUsers = uniqueUsers.size
 
-  let txt = `「 *Subs - Bots* 」`
-  txt += `\n\n`
-  txt += `*◦ Bot Principal →* 1\n`
-  txt += `*◦ Nombre →* ${namebot}\n`
-  txt += `*◦ Tiempo Conectada →* ${formatUptime}\n`
-  txt += `*◦ Subs Conectados →* ${totalUsers || 0}\n`
+  let txt = `❀ 「 *Subs - Bots * 」❀\n\n`
+  txt += `✦ *Bot Principal:* YuruYuri\n`
+  txt += `✦ *Tiempo Activa:* ${formatUptime}\n`
+  txt += `✦ *Subs Conectados:* ${totalUsers || 0}\n`
 
   if (totalUsers > 0) {
-    txt += `\n*◦ Lista de Subs:*\n`
+    txt += `\n✧ *Lista de Subs Activos:*\n`
     let i = 1
     for (let jid of uniqueUsers.keys()) {
-      txt += `  ${i++}. wa.me/${jid.split('@')[0]}\n`
+      txt += `  ❏ ${i++}. wa.me/${jid.split('@')[0]}\n`
     }
+  } else {
+    txt += `\n☁︎ *No hay subs conectados por ahora.*`
   }
 
   await conn.reply(m.chat, txt.trim(), m, rcanal)
