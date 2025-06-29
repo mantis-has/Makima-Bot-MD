@@ -57,34 +57,20 @@ handler.before = async (m, { conn }) => {
   if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
   const chat = global.db.data.chats[m.chat]
 
-  // Log general
-  console.log(`Mensaje en grupo ${m.chat} tipo: ${m.messageStubType} de: ${m.sender}`)
-
   // Antiárabe solo para entradas (stubType 27)
   if (chat.antiarabe && m.messageStubType === 27) {
     const newJid = m.messageStubParameters?.[0]
-    console.log('Nuevo participante detectado:', newJid)
-    if (!newJid) {
-      console.log('No se encontró nuevo participante en messageStubParameters')
-      return
-    }
+    if (!newJid) return
 
-    // Limpia el número quitando todo menos dígitos
     const number = newJid.split('@')[0].replace(/\D/g, '')
-    console.log(`Número limpio: ${number}`)
-
-    // Lista prefijos que quieres bloquear (puedes agregar más)
     const arabicPrefixes = ['212', '20', '971', '965', '966', '974', '973', '962']
 
     const isArab = arabicPrefixes.some(prefix => number.startsWith(prefix))
 
     if (isArab) {
-      console.log(`Antiárabe activado - expulsando a: ${newJid}`)
       await conn.sendMessage(m.chat, { text: `Mm ${newJid} será expulsado por número sospechoso (Antiárabe activado).` })
       await conn.groupParticipantsUpdate(m.chat, [newJid], 'remove')
       return true
-    } else {
-      console.log(`Antiárabe activado - usuario ${newJid} NO es sospechoso`)
     }
   }
 
@@ -106,7 +92,7 @@ handler.before = async (m, { conn }) => {
 
       try {
         await conn.sendMessage(m.chat, {
-          text: `🚫 Hey ${userTag}, los enlaces no están permitidos acá.`,
+          text: `🚫 Hey ${userTag}, no se permiten links aquí.`,
           mentions: [m.sender]
         }, { quoted: m })
 
@@ -131,7 +117,7 @@ handler.before = async (m, { conn }) => {
   }
 
   // Welcome y Bye
-  if (chat.welcome && (m.messageStubType === 27 || m.messageStubType === 28 || m.messageStubType === 32)) {
+  if (chat.welcome && [27, 28, 32].includes(m.messageStubType)) {
     const groupMetadata = await conn.groupMetadata(m.chat)
     const groupSize = groupMetadata.participants.length
     const userId = m.messageStubParameters?.[0] || m.sender
@@ -147,15 +133,11 @@ handler.before = async (m, { conn }) => {
     if (m.messageStubType === 27) {
       const txtWelcome = '🌸 𝙱𝙸𝙴𝙽𝚅𝙴𝙽𝙸𝙳@ 🌸'
       const bienvenida = `
-✿ *Bienvenid@* a *${groupMetadata.subject}* 🌺
-
-✰ ${userMention} ¡qué gusto verte por aquí!
-
-✦ Ahora somos *${groupSize}* integrantes activos 🧑‍🤝‍🧑
-
-🐾 Disfruta y participa, este grupo es pa’ compartir y pasarla bien.
-
-> Usa *#help* para conocer todos los comandos disponibles 👾
+✿ *Bienvenid@* a *${groupMetadata.subject}* 🌺  
+✰ ${userMention}, ¡qué gusto!  
+✦ Ahora somos *${groupSize}* 🧑‍🤝‍🧑  
+🐾 Pásala bien y comparte.  
+> *#help* para comandos.
 `.trim()
 
       await conn.sendMessage(m.chat, {
@@ -168,15 +150,11 @@ handler.before = async (m, { conn }) => {
     if (m.messageStubType === 28 || m.messageStubType === 32) {
       const txtBye = '🌸 𝙰𝙳𝙸Ó𝚂 🌸'
       const despedida = `
-✿ *Adiós* de *${groupMetadata.subject}* 🥀
-
-✰ ${userMention} esperamos verte pronto de nuevo ✨
-
-✦ Somos *${groupSize}* aún, cuidemos este espacio.
-
-💌 Que tengas un excelente día, nos vemos en otra ocasión.
-
-> Usa *#help* si necesitas algo o quieres volver 🙌
+✿ *Adiós* de *${groupMetadata.subject}* 🥀  
+✰ ${userMention}, vuelve pronto ✨  
+✦ Somos *${groupSize}* aún.  
+💌 Cuídate, nos vemos.  
+> *#help* si necesitas.
 `.trim()
 
       await conn.sendMessage(m.chat, {
