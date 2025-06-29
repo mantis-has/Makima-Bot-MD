@@ -6,11 +6,11 @@ const handler = async (m, { text, usedPrefix, command }) => {
   const botPath = path.join('./JadiBots', senderNumber)
   const configPath = path.join(botPath, 'config.json')
 
-  // Valida si se manda un link de imagen
+  
   const urlRegex = /(https?:\/\/[^\s]+(\.jpg|\.jpeg|\.png|\.webp))/i
   const match = text.match(urlRegex)
   if (!match) {
-    return m.reply(`> 📸 Usa así:\n*${usedPrefix + command} https://example.com/banner.jpg*, osea sube la imagen a un hosting de imágenes como catbox.moe`)
+    return m.reply(`> 📸 Usa así:\n*${usedPrefix + command} https://example.com/banner.jpg*, osea sube la imagen a un hosting de imágenes como catbox.moe, o simplemente utiliza .catbox respondiendo a la imagen q quieres de banner.`)
   }
 
   if (!fs.existsSync(botPath)) {
