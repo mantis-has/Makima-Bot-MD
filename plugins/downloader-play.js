@@ -22,7 +22,7 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
       await m.reply(txt);
     }
 
-    // Llamada a la API de descarga
+    // Descargar el audio desde Adonix API
     let api2 = await (await fetch(`https://theadonix-api.vercel.app/api/ytmp3?url=${encodeURIComponent(results.url)}`)).json();
 
     if (!api2.result || !api2.result.audio) {
@@ -30,9 +30,9 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
     }
 
     await conn.sendMessage(m.chat, {
-      document: { url: api2.result.audio },
+      audio: { url: api2.result.audio },
       mimetype: 'audio/mpeg',
-      fileName: api2.result.filename || `${results.title}.mp3`
+      ptt: true
     }, { quoted: m });
 
   } catch (e) {
