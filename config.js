@@ -25,7 +25,7 @@ global.namebot = '✧ ʏᴜʀᴜ ʏᴜʀɪ ✧'
 global.author = '「☄︎」 ᴍᴀᴅᴇ ᴡɪᴛʜ 𝘄𝗶𝗿𝗸'
 
 
-global.namecanal = '❀ 𝖬𝖾𝗆𝖾𝗌 𝗒 𝗆𝖺́𝗌 ✧'
+global.namecanal = '❀ Channel SYA ✧'
 global.canal = 'https://whatsapp.com/channel/0029Vb5pM031CYoMvQi2I02D'
 global.idcanal = '120363420941524030@newsletter'
 
