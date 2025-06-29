@@ -1,41 +1,38 @@
-let handler = async (m, { conn }) => {
-  // Lista de frases random
-  let frases = [
-    '✦ La vida es un viaje, disfruta cada paso.',
-    '❀ No dejes para mañana lo que puedes hacer hoy.',
-    '✧ Sonríe, que la vida es corta y dulce.',
-    '✿ Cada día es una nueva oportunidad.',
-    '❏ Sigue tus sueños con valentía.',
-    '☁︎ A veces, la calma es la respuesta.',
-    '✐ Nunca subestimes el poder de una palabra amable.',
-    '✦ Lo mejor está por venir, confía.',
-  ];
+let frases = [
+  'Qué onda wey, únete al mejor grupo ✧',
+  'No te quedes afuera, aquí la banda se junta ❀',
+  'Pura buena vibra, dale click y entra ✿',
+  'No pierdas tiempo, aquí es la fiesta ☁︎',
+]
 
-  // Elegir frase random
-  let fraseRandom = frases[Math.floor(Math.random() * frases.length)];
+let texto = frases[Math.floor(Math.random() * frases.length)]
 
-  // Enlace del grupo (invisible pero funciona con el botón)
-  let inviteLink = 'https://chat.whatsapp.com/If3WAOMJqZp2WLqDp9n4Cw?mode=r_t';
+let buttons = [
+  {
+    buttonId: 'join_group',
+    buttonText: { displayText: '✧ Unirme al grupo' },
+    type: 1
+  }
+]
 
-  // Botones con solo el botón de unirse al grupo (url button)
-  let buttons = [
-    {
-      urlButton: {
-        displayText: '✧ Unirme al grupo',
-        url: inviteLink
-      }
+let buttonMessage = {
+  text: texto,
+  footer: 'YuruYuri Bot',
+  buttons: buttons,
+  headerType: 1,
+  // Esto hace que al tocar el botón abra el link sin mostrarlo en el mensaje
+  contextInfo: {
+    externalAdReply: {
+      showAdAttribution: true,
+      mediaUrl: 'https://chat.whatsapp.com/If3WAOMJqZp2WLqDp9n4Cw',
+      mediaType: 1,
+      description: 'Invitación al grupo',
+      title: 'Únete a la banda',
+      thumbnail: null,
+      sourceUrl: 'https://chat.whatsapp.com/If3WAOMJqZp2WLqDp9n4Cw'
     }
-  ];
+  }
+}
 
-  // Enviar mensaje con frase y botón
-  await conn.sendMessage(m.chat, {
-    text: fraseRandom,
-    footer: 'YuruYuri Bot',
-    templateButtons: buttons,
-    headerType: 1
-  }, { quoted: m });
-};
-
-handler.command = ['frasegrupo', 'frasebot'];
-
-export default handler;
+// En tu handler o función de comandos:
+await conn.sendMessage(m.chat, buttonMessage, { quoted: m })
