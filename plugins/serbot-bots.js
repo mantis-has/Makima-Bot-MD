@@ -19,7 +19,7 @@ let handler = async (m, { conn }) => {
 
   let totalUsers = uniqueUsers.size
 
-  let txt = `❀ 「 *Subs - Bots * 」❀\n\n`
+  let txt = `❀ 「  *Subs - Bots *  」❀\n\n`
   txt += `✦ *Bot Principal:* YuruYuri\n`
   txt += `✦ *Tiempo Activa:* ${formatUptime}\n`
   txt += `✦ *Subs Conectados:* ${totalUsers || 0}\n`
