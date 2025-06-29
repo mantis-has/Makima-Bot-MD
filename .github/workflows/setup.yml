@@ -2,7 +2,7 @@ name: 🔧 Auto Setup & Start YuruYuri Bot
 
 on:
   push:
-    branches: [ "main" ]  # se activa cuando subís algo a la rama "main"
+    branches: [ "master" ]  # se activa cuando subís algo a la rama "main"
   workflow_dispatch:       # también se puede ejecutar manual desde GitHub
 
 jobs:
