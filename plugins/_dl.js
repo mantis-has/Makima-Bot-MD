@@ -36,3 +36,5 @@ let buttonMessage = {
 
 // En tu handler o función de comandos:
 await conn.sendMessage(m.chat, buttonMessage, { quoted: m })
+
+handler.command = ['grupo']
