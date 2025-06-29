@@ -23,11 +23,7 @@ let handler = async (m, { conn, text, usedPrefix, command }) => {
     await conn.sendMessage(m.chat, {
       image: { url: images_url },
       caption,
-      footer: '',
-      buttons: [
-        { buttonId: `${usedPrefix + command} ${text}`, buttonText: { displayText: '✧ Siguiente' }, type: 1 }
-      ],
-      headerType: 4
+      footer: ''
     }, { quoted: m });
 
   } catch (error) {
