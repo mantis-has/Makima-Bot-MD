@@ -1,21 +1,46 @@
 import fetch from 'node-fetch'
 
-let handler = async (m, { conn, text, command }) => {
-  if (!text) return m.reply(`✐ Ejemplo de uso:\n.${command} Autobots transformarse y avanzar`)
+let handler = async (m, { conn, args, command }) => {
+  const vocesDisponibles = [
+    'optimus_prime',
+    'eminem',
+    'taylor_swift',
+    'nahida',
+    'miku',
+    'nami',
+    'goku',
+    'ana',
+    'elon_musk',
+    'mickey_mouse',
+    'kendrick_lamar',
+    'angela_adkinsh'
+  ]
+
+  if (args.length < 2) {
+    return m.reply(`✐ Uso correcto:\n.${command} <voz> <texto>\n\n❐ Voces disponibles:\n${vocesDisponibles.join(', ')}`)
+  }
+
+  const voiceModel = args[0].toLowerCase()
+  const text = args.slice(1).join(' ')
+
+  if (!vocesDisponibles.includes(voiceModel)) {
+    return m.reply(`✐ Voz "${voiceModel}" no encontrada.\n❐ Voces disponibles:\n${vocesDisponibles.join(', ')}`)
+  }
 
   try {
     const res = await fetch(`https://zenzxz.dpdns.org/tools/text2speech?text=${encodeURIComponent(text)}`)
     const json = await res.json()
 
     if (!json.status || !Array.isArray(json.results)) {
-      return m.reply('✐ Error al obtener los datos de la API.')
+      return m.reply('✦ Error al obtener datos de la API.')
     }
 
-    // Buscar el modelo de Optimus Prime
-    const optimus = json.results.find(v => v.model === 'optimus_prime')
-    if (!optimus) return m.reply('✦ No se encontró la voz de Optimus Prime.')
+    const voice = json.results.find(v => v.model === voiceModel)
+    if (!voice || !voice.audio_url) {
+      return m.reply('✿ No se pudo generar el audio con esa voz.')
+    }
 
-    const audioRes = await fetch(optimus.audio_url)
+    const audioRes = await fetch(voice.audio_url)
     const audioBuffer = await audioRes.arrayBuffer()
 
     await conn.sendMessage(m.chat, {
@@ -26,11 +51,11 @@ let handler = async (m, { conn, text, command }) => {
 
   } catch (e) {
     console.error(e)
-    m.reply('✿ Error al generar la voz, intenta de nuevo más tarde.')
+    m.reply('✐ Ocurrió un error al generar el audio.')
   }
 }
 
-handler.help = ['optimus *<texto>*']
+handler.help = ['tts <voz> <texto>']
 handler.tags = ['voz', 'fun']
-handler.command = ['tts']
+handler.command = /^tts$/i
 export default handler
