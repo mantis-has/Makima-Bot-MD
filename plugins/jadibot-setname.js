@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 
 const handler = async (m, { conn, text, usedPrefix, command }) => {
-  if (!text) return m.reply(`👀 Usa así: *${usedPrefix + command} nombre nuevo*`)
+  if (!text) return m.reply(`Usa así: *${usedPrefix + command} nombre nuevo*`)
 
   const senderNumber = m.sender.replace(/[^0-9]/g, '')
   const botPath = path.join('./JadiBots', senderNumber)
@@ -14,7 +14,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
 
   let config = {}
 
-  // Si existe config.json, leerlo
+  
   if (fs.existsSync(configPath)) {
     try {
       config = JSON.parse(fs.readFileSync(configPath))
@@ -23,7 +23,7 @@ const handler = async (m, { conn, text, usedPrefix, command }) => {
     }
   }
 
-  // Editar o crear el campo "name"
+  
   config.name = text.trim()
 
   try {
