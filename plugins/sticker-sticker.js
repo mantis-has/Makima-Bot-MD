@@ -11,32 +11,29 @@ let handler = async (m, { conn, args }) => {
   let buffer
 
   try {
-    // Si responde a archivo multimedia
     if (/image|video|webp|tgs|webm/g.test(mime) && q.download) {
-      if (/video|webm/.test(mime) && (q.msg || q).seconds > 11)
-        return conn.reply(m.chat, '𖧏 Hola, este sticker animado no puede durar más de *10* Segundos.', m, rcanal)
-
+      if (/video|webm/.test(mime) && (q.msg || q).seconds > 11) {
+        return conn.reply(m.chat, '✦❀ Oops... Este sticker animado no puede durar más de *10* segundos ✿', m, rcanal)
+      }
       buffer = await q.download()
-
-    // Si es una URL válida
     } else if (args[0] && isUrl(args[0])) {
       const res = await fetch(args[0])
       buffer = await res.buffer()
-
     } else {
-      return conn.reply(m.chat, '𖧏 Hola, debes responder a una *Imagen, Sticker, Video, Webm o Tgs* para Convertirlo.', m, rcanal)
+      return conn.reply(m.chat, '✧❏ Porfa responde con una *Imagen, Sticker, Video, Webm o Tgs* para convertirlo en sticker kawaii ❐✿', m, rcanal)
     }
 
     await m.react('🕓')
 
-    // Convierte y agrega EXIF personalizado
     const stickerData = await toWebp(buffer)
     const finalSticker = await addExif(stickerData, packname, author)
 
-    await conn.sendFile(m.chat, finalSticker, 'sticker.webp', '', m)
+    await conn.sendFile(m.chat, finalSticker, 'sticker.webp', '☁︎ Aquí tienes tu sticker ✦', m)
     await m.react('✅')
+
   } catch (e) {
     await m.react('✖️')
+    console.error('❀ Error al crear sticker:', e)
   }
 }
 
