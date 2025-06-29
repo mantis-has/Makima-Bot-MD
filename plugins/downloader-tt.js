@@ -51,7 +51,7 @@ ${usedPrefix + command} https://vm.tiktok.com/xxxxxx`,
 
 ☁️ *Fuente:* Adonix API`.trim();
 
-    // Enviar miniatura con detalles
+    
     await conn.sendMessage(
       m.chat,
       {
@@ -62,7 +62,7 @@ ${usedPrefix + command} https://vm.tiktok.com/xxxxxx`,
       { quoted: m }
     );
 
-    // Enviar video
+    
     await conn.sendMessage(
       m.chat,
       {
